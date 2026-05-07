@@ -16,6 +16,18 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { useForm } from "@inertiajs/vue3"
+
+
+const form = useForm({
+    name: '',
+    email: '',
+    password: '',
+    password_confirmation: '',
+})
+const submit = () => {
+    form.post('/register')
+}
 
 const props = defineProps<{
   class?: HTMLAttributes["class"]
@@ -34,19 +46,24 @@ const props = defineProps<{
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form>
+        <form
+        @submit.prevent="submit">
           <FieldGroup>
             <Field>
               <FieldLabel for="name">
                 Full Name
               </FieldLabel>
-              <Input id="name" type="text" placeholder="John Doe" required />
+              <Input    v-model="form.name" id="name" type="text" placeholder="John Doe" required />
             </Field>
+            <p v-if="form.errors.name">
+  {{ form.errors.name }}
+</p>
             <Field>
               <FieldLabel for="email">
                 Email
               </FieldLabel>
               <Input
+              v-model="form.email"
                 id="email"
                 type="email"
                 placeholder="m@example.com"
@@ -59,13 +76,13 @@ const props = defineProps<{
                   <FieldLabel for="password">
                     Password
                   </FieldLabel>
-                  <Input id="password" type="password" required />
+                  <Input    v-model="form.password" id="password" type="password" required />
                 </Field>
                 <Field>
                   <FieldLabel for="confirm-password">
                     Confirm Password
                   </FieldLabel>
-                  <Input id="confirm-password" type="password" required />
+                  <Input    v-model="form.password_confirmation" id="confirm-password" type="password" required />
                 </Field>
               </Field>
               <FieldDescription>
@@ -77,7 +94,7 @@ const props = defineProps<{
                 Create Account
               </Button>
               <FieldDescription class="text-center">
-                Already have an account? <a href="#">Sign in</a>
+                Already have an account? <a href="/login">Sign in</a>
               </FieldDescription>
             </Field>
           </FieldGroup>
