@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { router,Link } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -54,9 +54,31 @@ const logout = () => {
 }
 
 const page = usePage<PageProps>()
-const user = page.props.auth.user
-const role = user.role
 
+const isActive = (componentName) => {
+  return page.component === componentName
+}
+const isParentActive = (item) => {
+  return item.children?.some(child =>
+    page.component === child.component
+  )
+}
+const isOpen = (item) => {
+  return isParentActive(item)
+}
+const user = page.props.auth.user
+const role = page.props.auth.user.role
+const getDashboardRoute = (role) => {
+  switch (role) {
+    case 'admin':
+      return '/admin/dashboard'
+    case 'staff':
+      return '/staff/dashboard'
+    case 'tenant':
+    default:
+      return '/tenant/dashboard'
+  }
+}
 const collapsed  = ref(false)
 const activeItem = ref('Dashboard')
 const openGroup  = ref<string | null>(null)
@@ -66,64 +88,77 @@ const navItems = [
     label: 'Dashboard',
     icon: LayoutDashboard,
     badge: null,
+    href: getDashboardRoute(role),
     roles: ['admin', 'staff', 'tenant'],
+    component: 'Dashboard',
   },
   {
     label: 'Properties',
     icon: Building2,
     badge: null,
+    href: '#',
     roles: ['admin', 'staff'],
     children: [
-      { label: 'All Properties' },
-      { label: 'Units' },
-      { label: 'Amenities' },
+      { label: 'All Properties' ,href: '/properties', component: "Properties/Index", },
+      { label: 'Units' ,href: '/units', component: "Units/Index",},
+      { label: 'Amenities',href: '/amenities', component: "Amenities/Index", },
     ],
   },
   {
     label: 'Tenants',
     icon: Users,
     badge: null,
+    href: '#',
     roles: ['admin', 'staff'],
+    component: 'Tenants/Index',
   },
   {
     label: 'Leases',
     icon: FileText,
     badge: null,
+    href: '#',
     roles: ['admin', 'staff', 'tenant'],
     children: [
-      { label: 'Active Leases' },
-      { label: 'Expiring Soon' },
-      { label: 'Renewals' },
+      { label: 'Active Leases',href: '#' ,component: 'Leases/Active', },
+      { label: 'Expiring Soon',href: '#', component: 'Leases/Expiring', },
+      { label: 'Renewals',href: '#' ,component: 'Leases/Renewals', },
     ],
   },
   {
     label: 'Maintenance',
     icon: Wrench,
     badge: '5',
+      href: '#',
     roles: ['admin', 'staff', 'tenant'],
     children: [
-      { label: 'Requests' },
-      { label: 'In Progress' },
-      { label: 'Completed' },
+      { label: 'Requests',href: '#' ,component: 'Maintenance/Requests', },
+      { label: 'In Progress',href: '#' ,component: 'Maintenance/InProgress', },
+      { label: 'Completed',href: '#' ,component: 'Maintenance/Completed', },
     ],
   },
   {
     label: 'Payments',
     icon: CreditCard,
     badge: '3',
+      href: '#',
     roles: ['admin', 'staff', 'tenant'],
+    component: 'Payments/Index',
   },
   {
     label: 'Reports',
     icon: BarChart3,
     badge: null,
+      href: '#',
     roles: ['admin'],
+    component: 'Reports/Index',
   },
   {
     label: 'Messages',
     icon: MessageSquare,
     badge: '2',
+      href: '#',
     roles: ['admin', 'staff', 'tenant'],
+    component: 'Messages/Index',
   },
 ]
 
@@ -202,7 +237,7 @@ const toggleGroup    = (label: string) =>
 
           <!-- Collapsible group -->
           <template v-if="item.children && !collapsed">
-            <Collapsible :open="openGroup === item.label" @update:open="toggleGroup(item.label)">
+            <Collapsible :open="openGroup === item.label || isOpen(item)" @update:open="toggleGroup(item.label)">
               <CollapsibleTrigger as-child>
                 <button
                   :class="[
@@ -223,25 +258,25 @@ const toggleGroup    = (label: string) =>
                   </Badge>
                   <ChevronRight
                     :size="13"
-                    :class="['shrink-0 transition-transform duration-200', openGroup === item.label ? 'rotate-90' : '']"
+                    :class="['shrink-0 transition-transform duration-200', openGroup === item.label || isOpen(item) ? 'rotate-90' : '']"
                   />
                 </button>
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div class="flex flex-col gap-px pl-5 pt-0.5 pb-1">
-                  <button
-                    v-for="child in item.children"
-                    :key="child.label"
-                    :class="[
-                      'text-left px-2.5 py-[5px] rounded-md text-[12.5px] border-l transition-colors',
-                      activeItem === child.label
-                        ? 'text-sidebar-primary border-sidebar-primary font-medium'
-                        : 'text-sidebar-foreground/60 border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-foreground',
-                    ]"
-                    @click="setActive(child.label)"
-                  >
-                    {{ child.label }}
-                  </button>
+               <button
+    v-for="child in item.children"
+    :key="child.label"
+    :class="[
+      'text-left px-2.5 py-[5px] rounded-md text-[12.5px] border-l transition-colors',
+       isActive(child.component)
+        ? 'text-sidebar-primary border-sidebar-primary font-medium'
+        : 'text-sidebar-foreground/60 border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-foreground',
+    ]"
+     @click="router.visit(child.href)"
+  >
+    {{ child.label }}
+  </button>
                 </div>
               </CollapsibleContent>
             </Collapsible>
@@ -254,7 +289,7 @@ const toggleGroup    = (label: string) =>
                 <button
                   :class="[
                     'relative flex items-center justify-center w-full py-[7px] rounded-lg transition-colors',
-                    activeItem === item.label
+                      isActive(item.component)
                       ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                       : 'text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground',
                   ]"
@@ -273,11 +308,11 @@ const toggleGroup    = (label: string) =>
             <button
               :class="[
                 'flex items-center gap-2.5 w-full px-2.5 py-[7px] rounded-lg text-[13.5px] font-medium transition-colors',
-                activeItem === item.label
+                  isActive(item.component)
                   ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                   : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground',
               ]"
-              @click="setActive(item.label)"
+              @click="router.visit(item.href)"
             >
               <component :is="item.icon" :size="15" class="shrink-0" />
               <span class="flex-1 text-left truncate">{{ item.label }}</span>

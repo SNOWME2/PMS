@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import AppSidebar from '@/components/AppSidebar.vue'
+import PageHeader from '@/components/PageHeader.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -116,26 +117,7 @@ const statusConfig: Record<string, { label: string; icon: any; class: string; bg
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
 
       <!-- Top bar -->
-      <header class="h-[54px] flex items-center justify-between px-6 border-b border-border shrink-0 bg-background">
-        <div>
-          <h1 class="text-[15px] font-semibold text-foreground">Dashboard</h1>
-          <p class="text-[11.5px] text-muted-foreground">Thursday, June 13 · Good morning 👋</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <Button variant="outline" size="sm" class="h-8 text-[12.5px] gap-1.5">
-            <Calendar :size="13" />
-            June 2025
-          </Button>
-          <Button size="sm" class="h-8 text-[12.5px] gap-1.5">
-            <Plus :size="13" />
-            New Request
-          </Button>
-          <button class="relative w-8 h-8 flex items-center justify-center rounded-lg hover:bg-accent transition-colors">
-            <Bell :size="15" class="text-muted-foreground" />
-            <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary" />
-          </button>
-        </div>
-      </header>
+      <PageHeader title="Dashboard" subtitle="Overview of your properties and tenants" />
 
       <!-- Scrollable body -->
       <main class="flex-1 overflow-y-auto p-6 space-y-6">
