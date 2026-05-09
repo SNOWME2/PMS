@@ -63,6 +63,7 @@ const isParentActive = (item) => {
     page.component === child.component
   )
 }
+
 const isOpen = (item) => {
   return isParentActive(item)
 }

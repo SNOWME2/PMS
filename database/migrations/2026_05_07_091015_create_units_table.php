@@ -20,13 +20,29 @@ return new class extends Migration
 
             $table->string('unit_number'); // A-101
             $table->decimal('rent_price', 10, 2)->default(0);
-
-            $table->boolean('is_occupied')->default(false);
+            $table->decimal('deposit_amount', 10, 2)->default(0);
+            $table->string('type');
+            $table->string('description')->nullable();
+            $table->string('unit_image');
+            $table->string('status')->default('vacant');
 
             $table->foreignId('tenant_id')
                 ->nullable()
                 ->constrained('users')
                 ->nullOnDelete();
+
+            $table->timestamps();
+        });
+
+        //Pivot table for unit amenities
+        Schema::create('unit_amenities', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('unit_id')
+                ->constrained()
+                ->cascadeOnDelete();
+            $table->foreignId('amenity_id')
+                ->constrained('amneties')
+                ->cascadeOnDelete();
 
             $table->timestamps();
         });
