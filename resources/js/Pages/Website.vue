@@ -15,11 +15,11 @@
         </nav>
 
         <div class="flex items-center gap-3">
-          <button @click="router.visit('/login')" class="px-4 py-2 rounded-xl border border-border hover:bg-muted transition">
+          <button class="px-4 py-2 rounded-xl border border-border hover:bg-muted transition">
             Login
           </button>
 
-          <button @click="router.visit('/register')" class="px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition shadow">
+          <button class="px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition shadow">
             Get Started
           </button>
         </div>
@@ -197,10 +197,114 @@
       </div>
     </section>
   </div>
+  <!-- Tenant Management Preview -->
+    <section class="py-24 border-t border-border bg-muted/20">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="flex items-center justify-between mb-10">
+          <div>
+            <h2 class="text-4xl font-black mb-3">
+              Tenant Management
+            </h2>
+
+            <p class="text-muted-foreground text-lg max-w-2xl">
+              Keep track of tenant records, contracts, occupancy status, and payment activity.
+            </p>
+          </div>
+
+          <button class="hidden md:block px-5 py-3 rounded-2xl bg-primary text-primary-foreground font-semibold shadow hover:opacity-90 transition">
+            Add Tenant
+          </button>
+        </div>
+
+        <div class="rounded-3xl border border-border bg-card overflow-hidden shadow-xl">
+          <div class="p-6 border-b border-border flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h3 class="text-xl font-bold">Tenant Directory</h3>
+              <p class="text-sm text-muted-foreground mt-1">
+                Manage active tenants and monitor occupancy.
+              </p>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <input
+                type="text"
+                placeholder="Search tenant..."
+                class="px-4 py-2 rounded-xl border border-border bg-background outline-none focus:ring-2 focus:ring-primary/30"
+              />
+
+              <button class="px-4 py-2 rounded-xl border border-border hover:bg-muted transition">
+                Filter
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-muted/50 border-b border-border">
+                <tr>
+                  <th class="text-left px-6 py-4 font-semibold">Tenant</th>
+                  <th class="text-left px-6 py-4 font-semibold">Unit</th>
+                  <th class="text-left px-6 py-4 font-semibold">Status</th>
+                  <th class="text-left px-6 py-4 font-semibold">Balance</th>
+                  <th class="text-left px-6 py-4 font-semibold">Move In</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr
+                  v-for="tenant in tenants"
+                  :key="tenant.name"
+                  class="border-b border-border hover:bg-muted/30 transition"
+                >
+                  <td class="px-6 py-5">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">
+                        {{ tenant.name.charAt(0) }}
+                      </div>
+
+                      <div>
+                        <p class="font-medium">{{ tenant.name }}</p>
+                        <span class="text-muted-foreground text-xs">
+                          {{ tenant.email }}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td class="px-6 py-5 font-medium">
+                    {{ tenant.unit }}
+                  </td>
+
+                  <td class="px-6 py-5">
+                    <span
+                      class="px-3 py-1 rounded-full text-xs font-medium"
+                      :class="tenant.status === 'Active'
+                        ? 'bg-primary/10 text-primary'
+                        : 'bg-yellow-500/10 text-yellow-600'"
+                    >
+                      {{ tenant.status }}
+                    </span>
+                  </td>
+
+                  <td class="px-6 py-5 font-medium">
+                    {{ tenant.balance }}
+                  </td>
+
+                  <td class="px-6 py-5 text-muted-foreground">
+                    {{ tenant.move_in }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
 </template>
 
 <script setup>
-import { router } from '@inertiajs/vue3'
 const features = [
   {
     icon: '🏢',
@@ -241,4 +345,30 @@ const features = [
 ]
 
 
+const tenants = [
+  {
+    name: 'John Doe',
+    email: 'john@example.com',
+    unit: 'A-101',
+    status: 'Active',
+    balance: '₱0',
+    move_in: 'May 01, 2026',
+  },
+  {
+    name: 'Maria Santos',
+    email: 'maria@example.com',
+    unit: 'B-204',
+    status: 'Pending',
+    balance: '₱4,500',
+    move_in: 'May 06, 2026',
+  },
+  {
+    name: 'James Cruz',
+    email: 'james@example.com',
+    unit: 'C-302',
+    status: 'Active',
+    balance: '₱1,200',
+    move_in: 'April 28, 2026',
+  },
+]
 </script>
