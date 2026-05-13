@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PropertiesController;
+use App\Http\Controllers\UnitsController;
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -30,11 +31,24 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware(['auth'])->group(function () {
 
-    // PROPERTIES
-    Route::get('/properties', [PropertiesController::class, 'index'])
-        ->name('properties.index');
 
-    // UNITS (by property)
-    // Route::get('/properties/{property}/units', [UnitController::class, 'index'])
-    //     ->name('units.index');
+    // ── Properties ────────────────────────────────────────────────────────────
+    // GET    /properties              → PropertyController@index
+    // GET    /properties/create       → PropertyController@create
+    // POST   /properties              → PropertyController@store
+    // GET    /properties/{property}   → PropertyController@show
+    // GET    /properties/{property}/edit → PropertyController@edit
+    // PUT    /properties/{property}   → PropertyController@update
+    // DELETE /properties/{property}   → PropertyController@destroy
+    Route::resource('properties', PropertiesController::class);
+
+    // ── Units ─────────────────────────────────────────────────────────────────
+    // GET    /units/create            → UnitController@create   (?property_id=X)
+    // POST   /units                   → UnitController@store
+    // GET    /units/{unit}            → UnitController@show
+    // GET    /units/{unit}/edit       → UnitController@edit
+    // PUT    /units/{unit}            → UnitController@update
+    // DELETE /units/{unit}            → UnitController@destroy
+    Route::resource('units', UnitsController::class)->except(['index']);
+    
 });

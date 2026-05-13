@@ -38,6 +38,7 @@
         "vue-input-otp": "^0.3.2",
         "vue-sonner": "^2.0.9",
         "vue3-apexcharts": "^1.11.1",
+        "ziggy-js": "^2.6.2",
         "zod": "^3.25.76"
     }
 }

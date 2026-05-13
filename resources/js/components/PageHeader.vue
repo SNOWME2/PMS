@@ -1,11 +1,19 @@
 <script setup>
+import { computed } from 'vue'
 import { Calendar, Plus, Bell } from 'lucide-vue-next'
+import { router, usePage } from '@inertiajs/vue3'
+import { route } from 'ziggy-js'
 import { Button } from '@/components/ui/button'
 
 defineProps({
   title: String,
   subtitle: String
 })
+
+const page = usePage()
+const showAddProperty = computed(() =>
+  page.component?.startsWith('Properties/')
+)
 </script>
 
 <template>
@@ -30,16 +38,29 @@ defineProps({
         June 2025
       </Button>
 
-      <Button size="sm" class="h-8 text-[12.5px] gap-1.5">
+   
+      <Button
+        v-if="showAddProperty"
+        size="sm"
+        class="h-8 text-[12.5px] gap-1.5"
+        @click="router.visit(route('properties.create'))"
+      >
+        <Plus :size="13" />
+        Add property
+        
+      </Button>
+         <Button v-else size="sm" class="h-8 text-[12.5px] gap-1.5">
         <Plus :size="13" />
         New Request
       </Button>
+
 
       <button class="relative w-8 h-8 flex items-center justify-center rounded-lg hover:bg-accent transition-colors">
         <Bell :size="15" class="text-muted-foreground" />
         <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary" />
       </button>
 
+  
     </div>
   </header>
 </template>

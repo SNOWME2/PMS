@@ -111,7 +111,7 @@ const statusConfig: Record<string, { label: string; icon: any; class: string; bg
 
 <template>
   <div class="flex h-screen bg-background overflow-hidden">
-    <AppSidebar />
+    <AppSidebar/>
 
     <!-- ── Main content ──────────────────────────────────────────────────── -->
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">

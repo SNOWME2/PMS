@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, type Component } from 'vue'
 import { router,Link } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -49,27 +49,44 @@ interface PageProps {
   }
   [key: string]: any
 }
+
+interface NavChild {
+  label: string
+  href: string
+  component: string
+}
+
+interface NavItem {
+  label: string
+  icon: Component
+  badge: string | null
+  href: string
+  roles: string[]
+  component?: string
+  children?: NavChild[]
+}
+
 const logout = () => {
   router.post('/logout')
 }
 
 const page = usePage<PageProps>()
 
-const isActive = (componentName) => {
+const isActive = (componentName: string) => {
   return page.component === componentName
 }
-const isParentActive = (item) => {
+const isParentActive = (item: NavItem) => {
   return item.children?.some(child =>
     page.component === child.component
   )
 }
 
-const isOpen = (item) => {
+const isOpen = (item: NavItem) => {
   return isParentActive(item)
 }
 const user = page.props.auth.user
 const role = page.props.auth.user.role
-const getDashboardRoute = (role) => {
+const getDashboardRoute = (role: string) => {
   switch (role) {
     case 'admin':
       return '/admin/dashboard'
@@ -270,7 +287,7 @@ const toggleGroup    = (label: string) =>
     :key="child.label"
     :class="[
       'text-left px-2.5 py-[5px] rounded-md text-[12.5px] border-l transition-colors',
-       isActive(child.component)
+       isActive(child.component as string)
         ? 'text-sidebar-primary border-sidebar-primary font-medium'
         : 'text-sidebar-foreground/60 border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-foreground',
     ]"
@@ -290,7 +307,7 @@ const toggleGroup    = (label: string) =>
                 <button
                   :class="[
                     'relative flex items-center justify-center w-full py-[7px] rounded-lg transition-colors',
-                      isActive(item.component)
+                      isActive(item.component as string)
                       ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                       : 'text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground',
                   ]"
@@ -309,7 +326,7 @@ const toggleGroup    = (label: string) =>
             <button
               :class="[
                 'flex items-center gap-2.5 w-full px-2.5 py-[7px] rounded-lg text-[13.5px] font-medium transition-colors',
-                  isActive(item.component)
+                  isActive(item.component as string)
                   ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                   : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground',
               ]"
