@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import AppSidebar from '@/components/AppSidebar.vue'
+import PageHeader from '@/components/PageHeader.vue'
 import {route} from 'ziggy-js'
 import {
   Select,
@@ -79,7 +81,13 @@ const submit = () => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6 p-6 max-w-3xl">
+  
+    <div class="flex h-screen bg-background overflow-hidden">
+    <AppSidebar/>
+  
+     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    <PageHeader title="Properties" subtitle="Manage your properties and units" />
+  <div class="flex flex-col gap-6 p-6 max-w-1xl">
 
     <!-- Breadcrumb -->
     <div class="flex items-center gap-1.5 text-[12.5px] text-muted-foreground">
@@ -234,4 +242,7 @@ const submit = () => {
 
     </form>
   </div>
+
+</div>
+</div>
 </template> 

@@ -5,6 +5,8 @@ import { router, usePage } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
 import { Button } from '@/components/ui/button'
 
+
+
 defineProps({
   title: String,
   subtitle: String
@@ -17,7 +19,7 @@ const showAddProperty = computed(() =>
 </script>
 
 <template>
-  <header class="h-[54px] flex items-center justify-between px-6 border-b border-border shrink-0 bg-background">
+  <header class="h-13.5 flex items-center justify-between px-6 border-b border-border shrink-0 bg-background">
 
     <!-- LEFT SIDE -->
     <div>

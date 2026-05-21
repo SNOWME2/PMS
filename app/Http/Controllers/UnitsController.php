@@ -11,6 +11,81 @@ use Inertia\Inertia;
 
 class UnitsController extends Controller
 {
+    // ── Index ─────────────────────────────────────────────────────────────────
+    /**
+     * List all units across all properties
+     * GET /units
+     */
+    public function index(Request $request)
+    {
+        $query = Unit::query()
+            ->with('property:id,name,address,city', 'activeLease.tenant', 'maintenanceRequests')
+            ->orderBy('property_id')
+            ->orderBy('floor_number')
+            ->orderBy('unit_number');
+
+        // Filter by property
+        if ($propertyId = $request->integer('property_id')) {
+            $query->where('property_id', $propertyId);
+        }
+
+        // Filter by floor
+        if ($floor = $request->integer('floor')) {
+            $query->where('floor_number', $floor);
+        }
+
+        // Filter by status
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        // Search by unit number, type, or property name
+        if ($search = $request->input('search')) {
+            $query->where(
+                fn($q) => $q
+                    ->where('unit_number', 'like', "%{$search}%")
+                    ->orWhere('type', 'like', "%{$search}%")
+                    ->orWhereHas('property', fn($p) => $p->where('name', 'like', "%{$search}%"))
+            );
+        }
+
+        $units = $query->get()->map(fn($u) => [
+            'id'             => $u->id,
+            'unit_number'    => $u->unit_number,
+            'type'           => $u->type,
+            'floor_number'   => $u->floor_number,
+            'size_sqm'       => $u->size_sqm,
+            'rent_price'     => $u->rent_price,
+            'status'         => $u->status,
+            'property'       => [
+                'id'      => $u->property->id,
+                'name'    => $u->property->name,
+                'address' => $u->property->address,
+                'city'    => $u->property->city,
+            ],
+            'active_lease'   => $u->activeLease ? [
+                'id'        => $u->activeLease->id,
+                'end_date'  => $u->activeLease->end_date->toISOString(),
+                'tenant'    => [
+                    'id'   => $u->activeLease->tenant->id,
+                    'name' => $u->activeLease->tenant->name,
+                ],
+            ] : null,
+            'maintenance_requests' => $u->maintenanceRequests->map(fn($m) => [
+                'id'     => $m->id,
+                'status' => $m->status,
+            ])->toArray(),
+        ]);
+
+        $properties = Property::orderBy('name')->get(['id', 'name']);
+
+        return Inertia::render('Units/Index', [
+            'units'       => $units,
+            'properties'  => $properties,
+            'filters'     => $request->only(['search', 'property_id', 'floor', 'status']),
+        ]);
+    }
+
     // ── Create ────────────────────────────────────────────────────────────────
     public function create(Request $request)
     {

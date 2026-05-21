@@ -6,9 +6,11 @@ use App\Models\Amenity;
 use App\Models\Property;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+
 
 class PropertiesController extends Controller
 {
@@ -109,6 +111,8 @@ class PropertiesController extends Controller
             'units.activeLease.tenant',
         ]);
 
+  
+
         $units = $property->units->map(fn($u) => [
             'id'             => $u->id,
             'unit_number'    => $u->unit_number,
@@ -131,6 +135,7 @@ class PropertiesController extends Controller
                 ],
             ] : null,
         ]);
+
 
         return Inertia::render('Properties/Show', [
             'property' => [

@@ -200,11 +200,11 @@ const toggleGroup    = (label: string) =>
     <aside
       :class="[
         'flex flex-col h-screen bg-sidebar border-r border-sidebar-border overflow-hidden transition-[width] duration-200 ease-in-out',
-        collapsed ? 'w-[60px]' : 'w-[240px]',
+        collapsed ? 'w-15' : 'w-60',
       ]"
     >
       <!-- Header -->
-      <div class="flex items-center justify-between min-h-[54px] px-3 py-3 gap-2">
+      <div class="flex items-center justify-between min-h-13.5 px-3 py-3 gap-2">
         <div v-if="!collapsed" class="flex items-center gap-2 overflow-hidden">
           <div class="flex items-center justify-center w-7 h-7 rounded-lg bg-sidebar-primary shrink-0">
             <Building :size="14" class="text-sidebar-primary-foreground" />
@@ -259,7 +259,7 @@ const toggleGroup    = (label: string) =>
               <CollapsibleTrigger as-child>
                 <button
                   :class="[
-                    'flex items-center gap-2.5 w-full px-2.5 py-[7px] rounded-lg text-[13.5px] font-medium transition-colors',
+                    'flex items-center gap-2.5 w-full px-2.5 py-1.75 rounded-lg text-[13.5px] font-medium transition-colors',
                     activeItem === item.label
                       ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                       : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground',
@@ -286,7 +286,7 @@ const toggleGroup    = (label: string) =>
     v-for="child in item.children"
     :key="child.label"
     :class="[
-      'text-left px-2.5 py-[5px] rounded-md text-[12.5px] border-l transition-colors',
+      'text-left px-2.5 py-1.25 rounded-md text-[12.5px] border-l transition-colors',
        isActive(child.component as string)
         ? 'text-sidebar-primary border-sidebar-primary font-medium'
         : 'text-sidebar-foreground/60 border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-foreground',
@@ -306,7 +306,7 @@ const toggleGroup    = (label: string) =>
               <TooltipTrigger as-child>
                 <button
                   :class="[
-                    'relative flex items-center justify-center w-full py-[7px] rounded-lg transition-colors',
+                    'relative flex items-center justify-center w-full py-1.75 rounded-lg transition-colors',
                       isActive(item.component as string)
                       ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                       : 'text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground',
@@ -325,7 +325,7 @@ const toggleGroup    = (label: string) =>
           <template v-else>
             <button
               :class="[
-                'flex items-center gap-2.5 w-full px-2.5 py-[7px] rounded-lg text-[13.5px] font-medium transition-colors',
+                'flex items-center gap-2.5 w-full px-2.5 py-1.75 rounded-lg text-[13.5px] font-medium transition-colors',
                   isActive(item.component as string)
                   ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                   : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground',
@@ -353,7 +353,7 @@ const toggleGroup    = (label: string) =>
         <template v-for="item in bottomItems" :key="item.label">
           <Tooltip v-if="collapsed">
             <TooltipTrigger as-child>
-              <button class="flex items-center justify-center w-full py-[7px] rounded-lg text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors">
+              <button class="flex items-center justify-center w-full py-1.75 rounded-lg text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors">
                 <component :is="item.icon" :size="15" />
               </button>
             </TooltipTrigger>

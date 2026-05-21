@@ -3,6 +3,8 @@ import { ref, computed } from 'vue'
 import { router, Link } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import AppSidebar from '@/components/AppSidebar.vue'
+import PageHeader from '@/components/PageHeader.vue'
 import { route } from 'ziggy-js'
 import {
   DropdownMenu,
@@ -92,7 +94,7 @@ const maintenanceCount = computed(() => props.property.units.filter(u => u.statu
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const statusConfig: Record<string, { label: string; icon: any; pill: string }> = {
-  vacant:      { label: 'Vacant',      icon: Circle,       pill: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-900' },
+  vacant:      { label: 'Vacant',      icon: Circle,       pill: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-100' },
   occupied:    { label: 'Occupied',    icon: CheckCircle2, pill: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:border-blue-900' },
   maintenance: { label: 'Maintenance', icon: Wrench,       pill: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:border-amber-900' },
   reserved:    { label: 'Reserved',    icon: Clock,        pill: 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:border-violet-900' },
@@ -112,6 +114,12 @@ const formatCurrency = (n: number) =>
 </script>
 
 <template>
+   <div class="flex h-screen bg-background overflow-hidden">
+    <AppSidebar/>
+  
+     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    <PageHeader title="Properties" subtitle="Manage your properties and units" />
+ 
   <div class="flex flex-col gap-6 p-6">
 
     <!-- ── Breadcrumb ────────────────────────────────────────────────────── -->
@@ -309,7 +317,7 @@ const formatCurrency = (n: number) =>
 
         <!-- Add unit CTA card -->
         <button
-          class="border-2 border-dashed border-border rounded-xl p-4 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all min-h-[140px]"
+          class="border-2 border-dashed border-border rounded-xl p-4 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all min-h-35"
           @click="router.visit(route('units.create', { property_id: property.id }))"
         >
           <Plus :size="20" />
@@ -318,4 +326,6 @@ const formatCurrency = (n: number) =>
       </div>
     </div>
   </div>
+</div>
+</div>
 </template>

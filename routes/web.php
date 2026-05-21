@@ -49,6 +49,6 @@ Route::middleware(['auth'])->group(function () {
     // GET    /units/{unit}/edit       → UnitController@edit
     // PUT    /units/{unit}            → UnitController@update
     // DELETE /units/{unit}            → UnitController@destroy
-    Route::resource('units', UnitsController::class)->except(['index']);
+    Route::resource('units', UnitsController::class);
     
 });

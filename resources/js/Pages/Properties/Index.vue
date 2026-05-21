@@ -4,7 +4,7 @@ import { router } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import AppSidebar from '@/Layouts/AppSidebar.vue'
+import AppSidebar from '@/components/AppSidebar.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { route } from 'ziggy-js'
 import {
@@ -40,7 +40,7 @@ interface Unit {
   id: number
   status: 'vacant' | 'occupied' | 'maintenance' | 'reserved'
 }
-console.log(route().current())
+
 interface Property {
   id: number
   name: string
@@ -54,10 +54,13 @@ interface Property {
   units: Unit[]
 }
 
+
+
 const props = defineProps<{
   properties: Property[]
   filters: { search?: string; type?: string; status?: string }
 }>()
+
 
 // ── Local state ───────────────────────────────────────────────────────────────
 const search  = ref(props.filters.search  ?? '')
@@ -105,21 +108,18 @@ const overallPct    = computed(() => totalUnits.value ? Math.round(totalOccupied
 </script>
 
 <template>
+  
+
+    <div class="flex h-screen bg-background overflow-hidden">
+    <AppSidebar/>
+  
+     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    <PageHeader title="Properties" subtitle="Manage your properties and units" />
+ 
   <div class="flex flex-col gap-6 p-6">
 
     <!-- ── Page header ──────────────────────────────────────────────────── -->
-    <div class="flex items-start justify-between">
-      <div>
-        <h1 class="text-xl font-semibold text-foreground">Properties</h1>
-        <p class="text-[13px] text-muted-foreground mt-0.5">
-          {{ properties.length }} properties · {{ totalUnits }} total units
-        </p>
-      </div>
-      <Button class="gap-2 h-9" @click="router.visit(route('properties.create'))">
-        <Plus :size="14" />
-        Add property
-      </Button>
-    </div>
+   
 
     <!-- ── Summary stat strip ───────────────────────────────────────────── -->
     <div class="grid grid-cols-4 gap-3">
@@ -143,7 +143,7 @@ const overallPct    = computed(() => totalUnits.value ? Math.round(totalOccupied
 
     <!-- ── Filters ──────────────────────────────────────────────────────── -->
     <div class="flex items-center gap-3 flex-wrap">
-      <div class="relative flex-1 min-w-[200px] max-w-xs">
+      <div class="relative flex-1 min-w-50 max-w-xs">
         <Search :size="13" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <Input
           v-model="search"
@@ -154,7 +154,7 @@ const overallPct    = computed(() => totalUnits.value ? Math.round(totalOccupied
       </div>
 
       <Select v-model="type" @update:model-value="applyFilters">
-        <SelectTrigger class="w-[140px] h-9 text-[13px]">
+        <SelectTrigger class="w-35 h-9 text-[13px]">
           <SelectValue placeholder="Type" />
         </SelectTrigger>
         <SelectContent>
@@ -165,7 +165,7 @@ const overallPct    = computed(() => totalUnits.value ? Math.round(totalOccupied
       </Select>
 
       <Select v-model="status" @update:model-value="applyFilters">
-        <SelectTrigger class="w-[160px] h-9 text-[13px]">
+        <SelectTrigger class="w-40 h-9 text-[13px]">
           <SelectValue placeholder="Status" />
         </SelectTrigger>
         <SelectContent>
@@ -304,4 +304,7 @@ const overallPct    = computed(() => totalUnits.value ? Math.round(totalOccupied
       </div>
     </div>
   </div>
+
+</div>
+</div>
 </template>

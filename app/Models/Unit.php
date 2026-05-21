@@ -53,26 +53,26 @@ class Unit extends Model
     /**
      * The one currently active lease (end_date >= today, status = active).
      */
-    // public function activeLease(): HasOne
-    // {
-    //     return $this->hasOne(Lease::class)
-    //         ->where('status', 'active')
-    //         ->where('end_date', '>=', now()->toDateString())
-    //         ->latestOfMany('start_date');
-    // }
+    public function activeLease(): HasOne
+    {
+        return $this->hasOne(Lease::class)
+            ->where('status', 'active')
+            ->where('end_date', '>=', now()->toDateString())
+            ->latestOfMany('start_date');
+    }
 
-    // /**
-    //  * All leases, including expired and terminated ones.
-    //  */
-    // public function leases(): HasMany
-    // {
-    //     return $this->hasMany(Lease::class)->latest('start_date');
-    // }
+    /**
+     * All leases, including expired and terminated ones.
+     */
+    public function leases(): HasMany
+    {
+        return $this->hasMany(Lease::class)->latest('start_date');
+    }
 
-    // public function maintenanceRequests(): HasMany
-    // {
-    //     return $this->hasMany(MaintenanceRequest::class)->latest();
-    // }
+    public function maintenanceRequests(): HasMany
+    {
+        return $this->hasMany(MaintenanceRequest::class)->latest();
+    }
 
     // ── Scopes ────────────────────────────────────────────────────────────────
 
