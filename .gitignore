@@ -19,8 +19,9 @@
 /storage/*.key
 /storage/pail
 /vendor
-vite.config.js
+
 Homestead.json
 Homestead.yaml
 Thumbs.db
 
+vite.config.js
