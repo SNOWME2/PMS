@@ -6,7 +6,7 @@ use App\Models\Amenity;
 use App\Models\Property;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -188,14 +188,17 @@ class PropertiesController extends Controller
             'amenity_ids.*' => ['integer', 'exists:amenities,id'],
         ]);
 
+      Log::info('Updating property', [$data]);
         // Replace photo if new one uploaded
         if ($request->hasFile('photo')) {
             if ($property->photo) {
                 Storage::disk('public')->delete($property->photo);
             }
             $data['photo'] = $request->file('photo')->store('properties', 'public');
-        } else {
-            unset($data['photo']); // don't overwrite with null
+        } 
+        else {
+            // unset($data['photo']); // don't overwrite with null
+            Storage::disk('public')->delete($property->photo);
         }
 
         $property->update($data);
