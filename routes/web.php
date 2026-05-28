@@ -51,4 +51,8 @@ Route::middleware(['auth'])->group(function () {
     // DELETE /units/{unit}            → UnitController@destroy
     Route::resource('units', UnitsController::class);
     
+
+    Route::get('/tenants', function (){
+        return Inertia::render('Tenants/Index');
+    });
 });

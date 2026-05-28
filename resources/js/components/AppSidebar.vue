@@ -126,7 +126,7 @@ const navItems = [
     label: 'Tenants',
     icon: Users,
     badge: null,
-    href: '#',
+    href: '/tenants',
     roles: ['admin', 'staff'],
     component: 'Tenants/Index',
   },

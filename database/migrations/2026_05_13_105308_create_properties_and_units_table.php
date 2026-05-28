@@ -24,9 +24,9 @@ return new class extends Migration
         Schema::create('properties', function (Blueprint $table) {
             $table->id();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->string('name');
-            $table->string('address');
-            $table->string('city');
+            $table->string('name')->index();
+            $table->string('address')->index();
+            $table->string('city')->index();
             $table->enum('type', ['residential', 'commercial'])->default('residential');
             $table->text('description')->nullable();
             $table->string('photo')->nullable();           // relative storage path
@@ -34,6 +34,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
+        
 
         // ── property_amenities (pivot) ─────────────────────────────────────────
         Schema::create('property_amenities', function (Blueprint $table) {

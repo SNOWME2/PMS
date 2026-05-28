@@ -26,9 +26,9 @@ class PropertiesController extends Controller
         if ($search = $request->input('search')) {
             $query->where(
                 fn($q) => $q
-                    ->where('name', 'like', "%{$search}%")
-                    ->orWhere('address', 'like', "%{$search}%")
-                    ->orWhere('city', 'like', "%{$search}%")
+                    ->where('name', 'like', "{$search}%")
+                    ->orWhere('address', 'like', "{$search}%")
+                    ->orWhere('city', 'like', "{$search}%")
             );
         }
 
@@ -41,12 +41,15 @@ class PropertiesController extends Controller
         if ($status = $request->input('status')) {
             match ($status) {
                 'has_vacancy' => $query->whereHas('units', fn($q) => $q->where('status', 'vacant')),
-                'full'        => $query->whereDoesntHave('units', fn($q) => $q->where('status', 'vacant')),
+                'full'        => $query->whereDoesntHave('units', fn($q) => $q->where('status', 'occupied')),
                 default       => null,
             };
         }
 
-        $properties = $query->get()->map(fn($p) => [
+        $properties = $query->paginate(12);
+
+        // Map the paginated results
+        $properties->getCollection()->transform(fn($p) => [
             'id'             => $p->id,
             'name'           => $p->name,
             'address'        => $p->address,
@@ -197,8 +200,8 @@ class PropertiesController extends Controller
             $data['photo'] = $request->file('photo')->store('properties', 'public');
         } 
         else {
-            // unset($data['photo']); // don't overwrite with null
-            Storage::disk('public')->delete($property->photo);
+            unset($data['photo']); // don't overwrite with null
+            // Storage::disk('public')->delete($property->photo);
         }
 
         $property->update($data);
