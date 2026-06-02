@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, type Component } from 'vue'
-import { router,Link } from '@inertiajs/vue3'
+import { router, Link } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -35,6 +35,7 @@ import {
   LogOut,
   ClipboardList,
   MessageSquare,
+  UserStar,
 } from 'lucide-vue-next'
 
 import { usePage } from '@inertiajs/vue3'
@@ -97,9 +98,9 @@ const getDashboardRoute = (role: string) => {
       return '/tenant/dashboard'
   }
 }
-const collapsed  = ref(false)
+const collapsed = ref(false)
 const activeItem = ref('Dashboard')
-const openGroup  = ref<string | null>(null)
+const openGroup = ref<string | null>(null)
 
 const navItems = [
   {
@@ -117,9 +118,9 @@ const navItems = [
     href: '#',
     roles: ['admin', 'staff'],
     children: [
-      { label: 'All Properties' ,href: '/properties', component: "Properties/Index", },
-      { label: 'Units' ,href: '/units', component: "Units/Index",},
-      { label: 'Amenities',href: '/amenities', component: "Amenities/Index", },
+      { label: 'All Properties', href: '/properties', component: "Properties/Index", },
+      { label: 'Units', href: '/units', component: "Units/Index", },
+      { label: 'Amenities', href: '/amenities', component: "Amenities/Index", },
     ],
   },
   {
@@ -137,28 +138,28 @@ const navItems = [
     href: '#',
     roles: ['admin', 'staff', 'tenant'],
     children: [
-      { label: 'Active Leases',href: '#' ,component: 'Leases/Active', },
-      { label: 'Expiring Soon',href: '#', component: 'Leases/Expiring', },
-      { label: 'Renewals',href: '#' ,component: 'Leases/Renewals', },
+      { label: 'Active Leases', href: '#', component: 'Leases/Active', },
+      { label: 'Expiring Soon', href: '#', component: 'Leases/Expiring', },
+      { label: 'Renewals', href: '#', component: 'Leases/Renewals', },
     ],
   },
   {
     label: 'Maintenance',
     icon: Wrench,
     badge: '5',
-      href: '#',
+    href: '#',
     roles: ['admin', 'staff', 'tenant'],
     children: [
-      { label: 'Requests',href: '#' ,component: 'Maintenance/Requests', },
-      { label: 'In Progress',href: '#' ,component: 'Maintenance/InProgress', },
-      { label: 'Completed',href: '#' ,component: 'Maintenance/Completed', },
+      { label: 'Requests', href: '#', component: 'Maintenance/Requests', },
+      { label: 'In Progress', href: '#', component: 'Maintenance/InProgress', },
+      { label: 'Completed', href: '#', component: 'Maintenance/Completed', },
     ],
   },
   {
     label: 'Payments',
     icon: CreditCard,
     badge: '3',
-      href: '#',
+    href: '#',
     roles: ['admin', 'staff', 'tenant'],
     component: 'Payments/Index',
   },
@@ -166,7 +167,7 @@ const navItems = [
     label: 'Reports',
     icon: BarChart3,
     badge: null,
-      href: '#',
+    href: '#',
     roles: ['admin'],
     component: 'Reports/Index',
   },
@@ -174,9 +175,18 @@ const navItems = [
     label: 'Messages',
     icon: MessageSquare,
     badge: '2',
-      href: '#',
+    href: '#',
     roles: ['admin', 'staff', 'tenant'],
     component: 'Messages/Index',
+  },
+
+  {
+    label: 'Staffs',
+    icon: UserStar,
+    badge: null,
+    href: '/staffs',
+    roles: ['admin'],
+    component: 'Staffs/Index',
   },
 ]
 
@@ -186,23 +196,21 @@ const visibleNavItems = computed(() =>
 
 const bottomItems = [
   { label: 'Notifications', icon: Bell },
-  { label: 'Settings',      icon: Settings },
+  { label: 'Settings', icon: Settings },
 ]
 
 const toggleCollapse = () => (collapsed.value = !collapsed.value)
-const setActive      = (label: string) => (activeItem.value = label)
-const toggleGroup    = (label: string) =>
+const setActive = (label: string) => (activeItem.value = label)
+const toggleGroup = (label: string) =>
   (openGroup.value = openGroup.value === label ? null : label)
 </script>
 
 <template>
   <TooltipProvider :delay-duration="0">
-    <aside
-      :class="[
-        'flex flex-col h-screen bg-sidebar border-r border-sidebar-border overflow-hidden transition-[width] duration-200 ease-in-out',
-        collapsed ? 'w-15' : 'w-60',
-      ]"
-    >
+    <aside :class="[
+      'flex flex-col h-screen bg-sidebar border-r border-sidebar-border overflow-hidden transition-[width] duration-200 ease-in-out',
+      collapsed ? 'w-15' : 'w-60',
+    ]">
       <!-- Header -->
       <div class="flex items-center justify-between min-h-13.5 px-3 py-3 gap-2">
         <div v-if="!collapsed" class="flex items-center gap-2 overflow-hidden">
@@ -217,20 +225,18 @@ const toggleGroup    = (label: string) =>
           <Building :size="14" class="text-sidebar-primary-foreground" />
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon"
+        <Button variant="ghost" size="icon"
           class="w-7 h-7 shrink-0 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-          @click="toggleCollapse"
-        >
+          @click="toggleCollapse">
           <PanelLeftClose v-if="!collapsed" :size="15" />
-          <PanelLeftOpen  v-else             :size="15" />
+          <PanelLeftOpen v-else :size="15" />
         </Button>
       </div>
 
       <!-- Search -->
       <div v-if="!collapsed" class="px-2.5 pb-2.5">
-        <div class="flex items-center gap-2 bg-sidebar-accent border border-sidebar-border rounded-lg px-2.5 py-1.5 cursor-pointer hover:border-sidebar-ring/40 transition-colors">
+        <div
+          class="flex items-center gap-2 bg-sidebar-accent border border-sidebar-border rounded-lg px-2.5 py-1.5 cursor-pointer hover:border-sidebar-ring/40 transition-colors">
           <Search :size="13" class="text-sidebar-foreground/50 shrink-0" />
           <span class="text-[12.5px] text-sidebar-foreground/50 flex-1 whitespace-nowrap">Search…</span>
           <kbd class="text-[10px] text-sidebar-foreground/40 bg-sidebar-border px-1.5 py-0.5 rounded font-mono">⌘K</kbd>
@@ -239,7 +245,8 @@ const toggleGroup    = (label: string) =>
       <div v-else class="flex justify-center pb-2.5">
         <Tooltip>
           <TooltipTrigger as-child>
-            <Button variant="ghost" size="icon" class="w-9 h-9 text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground">
+            <Button variant="ghost" size="icon"
+              class="w-9 h-9 text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground">
               <Search :size="15" />
             </Button>
           </TooltipTrigger>
@@ -257,44 +264,32 @@ const toggleGroup    = (label: string) =>
           <template v-if="item.children && !collapsed">
             <Collapsible :open="openGroup === item.label || isOpen(item)" @update:open="toggleGroup(item.label)">
               <CollapsibleTrigger as-child>
-                <button
-                  :class="[
-                    'flex items-center gap-2.5 w-full px-2.5 py-1.75 rounded-lg text-[13.5px] font-medium transition-colors',
-                    activeItem === item.label
-                      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                      : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground',
-                  ]"
-                  @click="setActive(item.label)"
-                >
+                <button :class="[
+                  'flex items-center gap-2.5 w-full px-2.5 py-1.75 rounded-lg text-[13.5px] font-medium transition-colors',
+                  activeItem === item.label
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+                ]" @click="setActive(item.label)">
                   <component :is="item.icon" :size="15" class="shrink-0" />
                   <span class="flex-1 text-left truncate">{{ item.label }}</span>
-                  <Badge
-                    v-if="item.badge"
-                    class="text-[10px] px-1.5 py-0 h-auto rounded-full bg-sidebar-primary/15 text-sidebar-primary border-0 font-semibold mr-1"
-                  >
+                  <Badge v-if="item.badge"
+                    class="text-[10px] px-1.5 py-0 h-auto rounded-full bg-sidebar-primary/15 text-sidebar-primary border-0 font-semibold mr-1">
                     {{ item.badge }}
                   </Badge>
-                  <ChevronRight
-                    :size="13"
-                    :class="['shrink-0 transition-transform duration-200', openGroup === item.label || isOpen(item) ? 'rotate-90' : '']"
-                  />
+                  <ChevronRight :size="13"
+                    :class="['shrink-0 transition-transform duration-200', openGroup === item.label || isOpen(item) ? 'rotate-90' : '']" />
                 </button>
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div class="flex flex-col gap-px pl-5 pt-0.5 pb-1">
-               <button
-    v-for="child in item.children"
-    :key="child.label"
-    :class="[
-      'text-left px-2.5 py-1.25 rounded-md text-[12.5px] border-l transition-colors',
-       isActive(child.component as string)
-        ? 'text-sidebar-primary border-sidebar-primary font-medium'
-        : 'text-sidebar-foreground/60 border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-foreground',
-    ]"
-     @click="router.visit(child.href)"
-  >
-    {{ child.label }}
-  </button>
+                  <button v-for="child in item.children" :key="child.label" :class="[
+                    'text-left px-2.5 py-1.25 rounded-md text-[12.5px] border-l transition-colors',
+                    isActive(child.component as string)
+                      ? 'text-sidebar-primary border-sidebar-primary font-medium'
+                      : 'text-sidebar-foreground/60 border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-foreground',
+                  ]" @click="router.visit(child.href)">
+                    {{ child.label }}
+                  </button>
                 </div>
               </CollapsibleContent>
             </Collapsible>
@@ -304,17 +299,15 @@ const toggleGroup    = (label: string) =>
           <template v-else-if="collapsed">
             <Tooltip>
               <TooltipTrigger as-child>
-                <button
-                  :class="[
-                    'relative flex items-center justify-center w-full py-1.75 rounded-lg transition-colors',
-                      isActive(item.component as string)
-                      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                      : 'text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground',
-                  ]"
-                  @click="setActive(item.label)"
-                >
+                <button :class="[
+                  'relative flex items-center justify-center w-full py-1.75 rounded-lg transition-colors',
+                  isActive(item.component as string)
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                    : 'text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+                ]" @click="setActive(item.label)">
                   <component :is="item.icon" :size="15" />
-                  <span v-if="item.badge" class="absolute top-1 right-1.5 w-1.5 h-1.5 rounded-full bg-sidebar-primary" />
+                  <span v-if="item.badge"
+                    class="absolute top-1 right-1.5 w-1.5 h-1.5 rounded-full bg-sidebar-primary" />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right">{{ item.label }}</TooltipContent>
@@ -323,21 +316,16 @@ const toggleGroup    = (label: string) =>
 
           <!-- Regular expanded item -->
           <template v-else>
-            <button
-              :class="[
-                'flex items-center gap-2.5 w-full px-2.5 py-1.75 rounded-lg text-[13.5px] font-medium transition-colors',
-                  isActive(item.component as string)
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground',
-              ]"
-              @click="router.visit(item.href)"
-            >
+            <button :class="[
+              'flex items-center gap-2.5 w-full px-2.5 py-1.75 rounded-lg text-[13.5px] font-medium transition-colors',
+              isActive(item.component as string)
+                ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+            ]" @click="router.visit(item.href)">
               <component :is="item.icon" :size="15" class="shrink-0" />
               <span class="flex-1 text-left truncate">{{ item.label }}</span>
-              <Badge
-                v-if="item.badge"
-                class="text-[10px] px-1.5 py-0 h-auto rounded-full bg-sidebar-primary/15 text-sidebar-primary border-0 font-semibold"
-              >
+              <Badge v-if="item.badge"
+                class="text-[10px] px-1.5 py-0 h-auto rounded-full bg-sidebar-primary/15 text-sidebar-primary border-0 font-semibold">
                 {{ item.badge }}
               </Badge>
             </button>
@@ -353,16 +341,15 @@ const toggleGroup    = (label: string) =>
         <template v-for="item in bottomItems" :key="item.label">
           <Tooltip v-if="collapsed">
             <TooltipTrigger as-child>
-              <button class="flex items-center justify-center w-full py-1.75 rounded-lg text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors">
+              <button
+                class="flex items-center justify-center w-full py-1.75 rounded-lg text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors">
                 <component :is="item.icon" :size="15" />
               </button>
             </TooltipTrigger>
             <TooltipContent side="right">{{ item.label }}</TooltipContent>
           </Tooltip>
-          <button
-            v-else
-            class="flex items-center gap-2.5 w-full px-2.5 py-[7px] rounded-lg text-[13.5px] font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
-          >
+          <button v-else
+            class="flex items-center gap-2.5 w-full px-2.5 py-[7px] rounded-lg text-[13.5px] font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors">
             <component :is="item.icon" :size="15" class="shrink-0" />
             <span class="truncate">{{ item.label }}</span>
           </button>
@@ -387,12 +374,8 @@ const toggleGroup    = (label: string) =>
           </div>
           <Tooltip>
             <TooltipTrigger as-child>
-              <Button
-                variant="ghost"
-                size="icon"
-                  @click="logout"
-                class="w-7 h-7 shrink-0 text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-              >
+              <Button variant="ghost" size="icon" @click="logout"
+                class="w-7 h-7 shrink-0 text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-sidebar-accent">
                 <LogOut :size="13" />
               </Button>
             </TooltipTrigger>

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PropertiesController;
 use App\Http\Controllers\UnitsController;
+use App\Http\Controllers\StaffController;
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -55,4 +56,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/tenants', function (){
         return Inertia::render('Tenants/Index');
     });
+
+
+    Route::get('/staffs', [StaffController::class, 'index'])->name('staff.index');
 });
