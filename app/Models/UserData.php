@@ -24,6 +24,8 @@ class UserData extends Model
         'date_of_birth',
         'gender',
         'profile_photo_path',
+        'job_title',
+        'department',
     ];
 // ── Custom Attributes ────────────────────────────────────────────────────
     public function getFullAddressAttribute(): string

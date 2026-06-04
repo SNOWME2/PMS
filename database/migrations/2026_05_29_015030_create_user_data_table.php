@@ -24,16 +24,21 @@ return new class extends Migration
 
             //Profile
             
-            $table->string('first_name')->nullable();
-            $table->string('last_name')->nullable();
-            $table->string('middle_name')->nullable();
+            $table->string('first_name')->nullable()->index();
+            $table->string('last_name')->nullable()->index();
+            $table->string('middle_name')->nullable()->index();
             $table->string('phone', 20)->nullable();
            //Email is already in users table, so we won't duplicate it here
             $table->string('id_type')->nullable();
             $table->string('id_number')->nullable();
             $table->date('date_of_birth')->nullable();
-            $table->enum('gender', ['male', 'female', 'other'])->nullable();
-            
+            $table->enum('gender', ['male', 'female', 'other'])->nullable()->index();
+
+
+            // Employment details
+            $table->string('job_title')->nullable()->index();
+            $table->string('department')->nullable();  // Remove if not needed
+
             //Profile photo
             $table->string('profile_photo_path')->nullable();
             $table->timestamps();
