@@ -58,5 +58,5 @@ Route::middleware(['auth'])->group(function () {
     });
 
 
-    Route::get('/staffs', [StaffController::class, 'index'])->name('staff.index');
+    Route::resource('staffs', StaffController::class);
 });

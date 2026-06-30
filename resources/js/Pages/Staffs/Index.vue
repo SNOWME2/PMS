@@ -4,13 +4,16 @@ import { router } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
 import AppSidebar from '@/components/AppSidebar.vue'
 import PageHeader from '@/components/PageHeader.vue'
-import { Eye, FilePenLine, Trash2 } from 'lucide-vue-next'
+import { Eye, FilePenLine, Trash2, CircleCheck,CircleX } from 'lucide-vue-next'
 import { watch } from 'vue'
 
 import { debounce } from 'lodash-es'
 interface Staff {
     id: number
     name: string
+    first_name: string
+    middle_name: string | null
+    last_name: string
     initials: string 
     email: string
     phone: string | null
@@ -50,7 +53,7 @@ const staffToDelete = ref<number | null>(null)
 
 // ── Server-side search with debounce ──────────────────────────────
 const performSearch = () => {
-    router.get(route('staff.index'), {
+    router.get(route('staffs.index'), {
         search: search.value || undefined,
     }, { preserveState: true, replace: true })
 }
@@ -100,6 +103,9 @@ function getAvatarColor(name?: string | null) {
 // ── Form ──────────────────────────────────────────────────────────
 const emptyForm = () => ({
     name: '',
+    first_name: '',
+    middle_name: '',
+    last_name:'',
     email: '',
     phone: '',
     department: '',
@@ -373,7 +379,7 @@ function confirmDelete() {
                     enter-from-class="opacity-0 scale-95 translate-y-2"
                     enter-to-class="opacity-100 scale-100 translate-y-0">
                     <div v-if="isDialogOpen"
-                        class="relative z-10 bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+                        class="relative z-10 bg-white rounded-2xl shadow-xl w-full max-w-6xl max-h-[90vh] md:max-h-[85vh] lg:max-h-[80vh] overflow-hidden">
 
                         <!-- Modal Header -->
                         <div class="bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-5">
@@ -386,12 +392,26 @@ function confirmDelete() {
                         </div>
 
                         <!-- Modal Body -->
-                        <div class="px-6 py-5 grid grid-cols-2 gap-4">
-                            <div class="col-span-2">
-                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Full Name</label>
-                                <input v-model="form.name" type="text" placeholder="e.g. Maria Santos"
+                        <div class="px-6 py-5 grid grid-cols-3 gap-4">
+                            <div class="col-span-1">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">First Name</label>
+                                <input v-model="form.first_name" type="text" 
                                     class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition bg-slate-50" />
                             </div>
+                            <div class="col-span-1">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Middle Name</label>
+                                <input v-model="form.middle_name" type="text"
+                                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition bg-slate-50" />
+                            </div>
+                            <div class="col-span-1">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Surname</label>
+                                <input v-model="form.last_name" type="text"
+                                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition bg-slate-50" />
+                            </div>
+                        </div>
+                            <div class="px-6  grid grid-cols-2 gap-4">
+                 
+
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1.5">Email Address</label>
                                 <input v-model="form.email" type="email" placeholder="email@example.com"
@@ -411,6 +431,7 @@ function confirmDelete() {
                                 <label class="block text-xs font-semibold text-slate-600 mb-1.5">Department</label>
                                 <input v-model="form.department" type="text" placeholder="e.g. Operations"
                                     class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition bg-slate-50" />
+                
                             </div>
                             <div class="col-span-2">
                                 <label class="block text-xs font-semibold text-slate-600 mb-1.5">Employment
@@ -445,13 +466,16 @@ function confirmDelete() {
                         </div>
 
                         <!-- Modal Footer -->
-                        <div class="px-6 pb-5 flex justify-end gap-3">
-                            <button @click="isDialogOpen = false"
-                                class="px-4 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
+                        <div class="px-6 pb-5 flex justify-end gap-3 py-4">
+                           <button @click="isDialogOpen = false"
+                                class="group flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-slate-700  bg-red-100 hover:text-red-700 hover:bg-red-200 rounded-lg transition-colors">
+                                <CircleX :strokeWidth="2.5"
+                                    class="w-4 h-4 font-bold text-red-500 group-hover:text-red-700 transition-colors" />
                                 Cancel
                             </button>
                             <button @click="saveStaff"
-                                class="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm shadow-indigo-200">
+                                class=" group flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 hover:text-white rounded-lg transition-colors shadow-sm shadow-green-200">
+<CircleCheck class="w-4 h-4" />
                                 {{ isEditing ? 'Save Changes' : 'Add Employee' }}
                             </button>
                         </div>
