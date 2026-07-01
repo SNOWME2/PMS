@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { router, Link } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
+import AppSidebar from '@/components/AppSidebar.vue'
+import PageHeader from '@/components/PageHeader.vue'
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -94,9 +97,15 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 </script>
 
 <template>
-  <div class="flex flex-col gap-6 p-6">
+  
+<div class="flex h-screen bg-background overflow-hidden">
+    <AppSidebar />
 
-    <!-- Breadcrumb -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <PageHeader title="Properties" subtitle="Manage your properties and units" />
+
+      <div class="flex flex-col gap-6 p-6 max-w-1xl max-h-100% overflow-y-auto">
+  
     <div class="flex items-center gap-1.5 text-[12.5px] text-muted-foreground flex-wrap">
       <Link :href="route('properties.index')" class="hover:text-foreground transition-colors">Properties</Link>
       <ChevronRight :size="12" />
@@ -403,4 +412,6 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
       </div>
     </div>
   </div>
-</template>
+</div>
+a
+</div></template>

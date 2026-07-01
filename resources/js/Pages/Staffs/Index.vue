@@ -49,6 +49,7 @@ const search = ref(props.filters.search ?? '')
 const isDialogOpen = ref(false)
 const isDeleteDialogOpen = ref(false)
 const isEditing = ref(false)
+const isViewing = ref(false)
 const staffToDelete = ref<number | null>(null)
 
 // ── Server-side search with debounce ──────────────────────────────
@@ -123,6 +124,7 @@ const form = reactive<Partial<Staff> & { id?: number }>(emptyForm())
 
 function openAddDialog() {
     isEditing.value = false
+    isViewing.value = false
     Object.assign(form, emptyForm())
     isDialogOpen.value = true
 }
@@ -133,9 +135,11 @@ function openEditDialog(staff: Staff) {
     isDialogOpen.value = true
 }
 function openViewDialog(staff:Staff){
-    isEditing.value = false
+    isViewing.value = true
     Object.assign(form, { ...staff })
+
     isDialogOpen.value = true
+    form
 }
 
 function openDeleteDialog(id: number) {
@@ -384,10 +388,10 @@ function confirmDelete() {
                         <!-- Modal Header -->
                         <div class="bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-5">
                             <h2 class="text-white font-semibold text-lg">
-                                {{ isEditing ? '✏️ Edit Employee' : '👤 Add New Employee' }}
+                                {{ isEditing ? '✏️ Edit Employee' : isViewing ? '👁️ View Employee' : '👤 Add New Employee' }}
                             </h2>
                             <p class="text-indigo-200 text-xs mt-0.5">
-                                {{ isEditing ? 'Update the employee information below.' : 'Fill in the details to add a new team member.' }}
+                                {{ isEditing ? 'Update the employee information below.' : isViewing ? 'Review the employee details below.' : 'Fill in the details to add a new team member.' }}
                             </p>
                         </div>
 
@@ -395,17 +399,17 @@ function confirmDelete() {
                         <div class="px-6 py-5 grid grid-cols-3 gap-4">
                             <div class="col-span-1">
                                 <label class="block text-xs font-semibold text-slate-600 mb-1.5">First Name</label>
-                                <input v-model="form.first_name" type="text" 
+                                <input v-model="form.first_name" type="text" :readonly="isViewing"
                                     class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition bg-slate-50" />
                             </div>
                             <div class="col-span-1">
                                 <label class="block text-xs font-semibold text-slate-600 mb-1.5">Middle Name</label>
-                                <input v-model="form.middle_name" type="text"
+                                <input v-model="form.middle_name" type="text" :readonly="isViewing"
                                     class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition bg-slate-50" />
                             </div>
                             <div class="col-span-1">
                                 <label class="block text-xs font-semibold text-slate-600 mb-1.5">Surname</label>
-                                <input v-model="form.last_name" type="text"
+                                <input v-model="form.last_name" type="text" :readonly="isViewing"
                                     class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition bg-slate-50" />
                             </div>
                         </div>
@@ -414,22 +418,22 @@ function confirmDelete() {
 
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1.5">Email Address</label>
-                                <input v-model="form.email" type="email" placeholder="email@example.com"
+                                <input v-model="form.email" type="email" placeholder="email@example.com" :readonly="isViewing"
                                     class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition bg-slate-50" />
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1.5">Phone Number</label>
-                                <input v-model="form.phone" type="text" placeholder="09XX XXX XXXX"
+                                <input v-model="form.phone" type="text" placeholder="09XX XXX XXXX" :readonly="isViewing"
                                     class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition bg-slate-50" />
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1.5">Role / Position</label>
-                                <input v-model="form.role" type="text" placeholder="e.g. Manager"
+                                <input v-model="form.role" type="text" placeholder="e.g. Manager" :readonly="isViewing"
                                     class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition bg-slate-50" />
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1.5">Department</label>
-                                <input v-model="form.department" type="text" placeholder="e.g. Operations"
+                                <input v-model="form.department" type="text" placeholder="e.g. Operations" :readonly="isViewing"
                                     class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition bg-slate-50" />
                 
                             </div>
@@ -439,7 +443,7 @@ function confirmDelete() {
                                 <div class="flex gap-3">
                                     <label
                                         :class="['flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer transition-all', form.status === 'Active' ? 'border-emerald-400 bg-emerald-50' : 'border-slate-200 bg-slate-50 hover:border-slate-300']">
-                                        <input type="radio" v-model="form.status" value="Active" class="hidden" />
+                                        <input type="radio" v-model="form.status" value="Active" class="hidden" :disabled="isViewing" />
                                         <span
                                             :class="['w-3 h-3 rounded-full flex-shrink-0', form.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-300']" />
                                         <div>
@@ -451,7 +455,7 @@ function confirmDelete() {
                                     </label>
                                     <label
                                         :class="['flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer transition-all', form.status === 'Inactive' ? 'border-rose-400 bg-rose-50' : 'border-slate-200 bg-slate-50 hover:border-slate-300']">
-                                        <input type="radio" v-model="form.status" value="Inactive" class="hidden" />
+                                        <input type="radio" v-model="form.status" value="Inactive" class="hidden" :disabled="isViewing" />
                                         <span
                                             :class="['w-3 h-3 rounded-full flex-shrink-0', form.status === 'Inactive' ? 'bg-rose-500' : 'bg-slate-300']" />
                                         <div>
@@ -466,7 +470,8 @@ function confirmDelete() {
                         </div>
 
                         <!-- Modal Footer -->
-                        <div class="px-6 pb-5 flex justify-end gap-3 py-4">
+                        <div class="px-6 pb-5 flex justify-end gap-3 py-4" >
+                            <div v-if="!isViewing">
                            <button @click="isDialogOpen = false"
                                 class="group flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-slate-700  bg-red-100 hover:text-red-700 hover:bg-red-200 rounded-lg transition-colors">
                                 <CircleX :strokeWidth="2.5"
@@ -477,6 +482,13 @@ function confirmDelete() {
                                 class=" group flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 hover:text-white rounded-lg transition-colors shadow-sm shadow-green-200">
 <CircleCheck class="w-4 h-4" />
                                 {{ isEditing ? 'Save Changes' : 'Add Employee' }}
+                            </button>
+                        </div>
+                           <button @click="isDialogOpen = false"
+                                class="group flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-slate-700  bg-red-100 hover:text-red-700 hover:bg-red-200 rounded-lg transition-colors">
+                                <CircleX :strokeWidth="2.5"
+                                    class="w-4 h-4 font-bold text-red-500 group-hover:text-red-700 transition-colors" />
+                                Close
                             </button>
                         </div>
                     </div>
