@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class UserData extends Model
 {
+  
     protected $table = 'user_data';
 
     protected $fillable = [
@@ -26,6 +27,9 @@ class UserData extends Model
         'profile_photo_path',
         'job_title',
         'department',
+        'employment_status',
+        'status',
+        'last_login',
     ];
 // ── Custom Attributes ────────────────────────────────────────────────────
     public function getFullAddressAttribute(): string

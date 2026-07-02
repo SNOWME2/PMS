@@ -76,7 +76,7 @@ const removePhoto = () => {
 
 const submit = () => {
     if (isEditing.value) {
-        console.log(form.data());
+       
         form.transform((data) => ({
             ...data,
             _method: "put", // This tells Laravel to treat the POST as a PUT
