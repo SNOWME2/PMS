@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
+use App\Rules\ValidatorParamsRule;
 
 class StaffController extends Controller
 {
@@ -78,15 +79,16 @@ class StaffController extends Controller
     public function store(Request $request)
     {
         try {
+            
 
             // Log::info('Updating user data for user ID: ' . $request);
             $data = $request->validate([
                 'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
                 'password' => ['required', 'string', 'min:8'],
 
-                'first_name' => ['required', 'string', 'max:255'],
-                'last_name' => ['required', 'string', 'max:255'],
-                'middle_name' => ['nullable', 'string', 'max:255'],
+                'first_name' => (ValidatorParamsRule::name()),
+                'last_name' => (ValidatorParamsRule::name()),
+                'middle_name' => (ValidatorParamsRule::optionalName()),
                 'address' => ['nullable', 'string', 'max:500'],
                 'city' => ['nullable', 'string', 'max:100'],
                 'province' => ['nullable', 'string', 'max:100'],
@@ -163,9 +165,9 @@ class StaffController extends Controller
         try {
             $data = $request->validate([
                 'email'       => ['required', 'email', 'max:255'],
-                'first_name'  => ['required', 'string', 'max:255'],
-                'last_name'   => ['required', 'string', 'max:255'],
-                'middle_name' => ['nullable', 'string', 'max:255'],
+                'first_name' => (ValidatorParamsRule::name()),
+                'last_name' => (ValidatorParamsRule::name()),
+                'middle_name' => (ValidatorParamsRule::optionalName()),
                 'address'     => ['nullable', 'string', 'max:500'],
                 'city'        => ['nullable', 'string', 'max:100'],
                 'province'    => ['nullable', 'string', 'max:100'],
