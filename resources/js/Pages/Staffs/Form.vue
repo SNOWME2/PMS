@@ -3,6 +3,7 @@ import { watch, ref } from "vue";
 import { useForm } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
 import { CircleCheck, CircleX, LoaderCircle, X } from "lucide-vue-next";
+import { VueDatePicker } from '@vuepic/vue-datepicker';
 
 interface Staff {
     id: number;
@@ -132,6 +133,7 @@ const submit = () => {
 
                 emit("close");
             },
+            
         });
     } else {
         form.post(route("staffs.store"), {
@@ -317,8 +319,15 @@ const readonlyClass =
                                     <label
                                         class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Birthday</label>
                                     <p v-if="isViewing()" :class="readonlyClass">{{ form.birthday || '—' }}</p>
-                                    <input v-else v-model="form.birthday" type="date"
-                                        :class="inputClass('border-slate-200')" />
+                                   <VueDatePicker v-model="form.birthday" :max-date="new Date()" :model-type="'yyyy-MM-dd'"
+                                       :time-config="{ enableTimePicker: false }"
+                                        :formats="{ input: 'LLLL dd, yyyy ' }"
+                                        placeholder="Select birthday" 
+                                        :auto-apply="true"
+                                       />
+                                    <p v-if="form.errors.birthday" class="mt-1 text-sm text-red-600">
+                                        {{ form.errors.birthday }}
+                                    </p>
                                 </div>
                             </div>
 

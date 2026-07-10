@@ -12,12 +12,33 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 use App\Rules\ValidatorParamsRule;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class StaffController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
+
+    protected array $nullableString;
+    protected array $requiredString;
+    protected array $dateBeforeToday;
+    protected array $dateAfterToday;
+    protected array $dateAfterOrEqualToday;
+    protected array $nullableImage;
+    protected array $requiredImage;
+
+    public function __construct()
+    {
+        $this->nullableString = ValidatorParamsRule::nullableString();
+        $this->requiredString = ValidatorParamsRule::requiredString();
+        $this->dateBeforeToday = ValidatorParamsRule::dateBeforeToday();
+        $this->dateAfterToday = ValidatorParamsRule::dateAfterToday();
+        $this->dateAfterOrEqualToday = ValidatorParamsRule::dateAfterOrEqualToday();
+        $this->nullableImage = ValidatorParamsRule::nullableImage();
+        $this->requiredImage = ValidatorParamsRule::requiredImage();
+    }
     public function index(request $request)
     {
         $query = User::query()
@@ -78,66 +99,57 @@ class StaffController extends Controller
      */
     public function store(Request $request)
     {
-        try {
-            
+      
 
-            // Log::info('Updating user data for user ID: ' . $request);
-            $data = $request->validate([
-                'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-                'password' => ['required', 'string', 'min:8'],
+        $data = $request->validate([
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8'],
 
-                'first_name' => (ValidatorParamsRule::name()),
-                'last_name' => (ValidatorParamsRule::name()),
-                'middle_name' => (ValidatorParamsRule::optionalName()),
-                'address' => ['nullable', 'string', 'max:500'],
-                'city' => ['nullable', 'string', 'max:100'],
-                'province' => ['nullable', 'string', 'max:100'],
-                'gender' => ['nullable', 'string', 'max:10'],
-                'postal_code' => ['nullable', 'string', 'max:20'],
-                'phone' => ['nullable', 'string', 'max:20'],
-                'id_type' => ['nullable', 'string', 'max:50'],
-                'id_number' => ['nullable', 'string', 'max:100'],
-                'photo'       => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-                'role' => ['nullable', 'string', 'max:50'],
-                'department' => ['nullable', 'string', 'max:100'],
-                'birthday' => ['nullable', 'date'],
-            ]);
+            'first_name' => ['max:255', ...$this->requiredString],
+            'last_name' => ['max:255', ...$this->requiredString],
+            'middle_name' => ['max:255', ...$this->nullableString],
+            'address' => ['max:500', ...$this->nullableString],
+            'city' => ['max:100', ...$this->nullableString],
+            'province' => ['max:100', ...$this->nullableString],
+            'gender' => ['max:10', ...$this->nullableString],
+            'postal_code' => ['max:20', ...$this->nullableString],
+            'phone' => ['max:20', ...$this->nullableString],
+            'id_type' => ['max:50', ...$this->nullableString],
+            'id_number' => ['max:100', ...$this->nullableString],
+            'photo' => ['max:5120', ...$this->nullableImage],
+            'role' => ['max:50', ...$this->nullableString],
+            'department' => ['max:100', ...$this->nullableString],
+            'birthday' => [...$this->dateBeforeToday],
+        ]);
 
-            if ($request->hasFile('photo')) {
-                $data['photo'] = $request->file('photo')->store('staff', 'public');
-            }
-            //Rename birthday to date_of_birth and role to job_title to match the database columns
-            $data['profile_photo_path'] = $data['photo'];
-            $data['date_of_birth'] = $data['birthday'];
-            $data['job_title'] = $data['role'];
-            $email = $data['email'];
-            $password = $data['password'];
-
-            //Create user Credentials Email and Password
-            $user = User::create([
-                'email' => $email,
-                'password' => Hash::make($password),
-                'role' => 'staff',
-            ]);
-
-            //Removal of email and password from the data array before creating UserData
-            $userData = Arr::except($data, ['email', 'password']);
-
-            //Create UserData record for the newly created user
-            $userData['user'] = $user->id;
-            UserData::create($userData);
-
-        } catch (QueryException $e) {
-
-            return back()->withErrors([
-                'error' => 'Database error. Please try again later.'
-            ]);
-        } catch (\Exception $e) {
-
-            return back()->withErrors([
-                'error' => 'An unexpected error occurred.'
-            ]);
+        if ($request->hasFile('photo')) {
+            $data['profile_photo_path'] = $request->file('photo')->store('staff', 'public');
         }
+
+        $data['date_of_birth'] = $data['birthday'] ?? null;
+        $data['job_title'] = $data['role'] ?? null;
+
+        $user = User::create([
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'role' => 'staff',
+        ]);
+
+        $userData = Arr::except($data, [
+            'email',
+            'password',
+            'birthday',
+            'role',
+            'photo',
+        ]);
+
+        $userData['user'] = $user->id;
+
+        UserData::create($userData);
+
+        return redirect()
+            ->route('staff.index')
+            ->with('success', 'Staff created successfully.');
     }
 
     /**
@@ -162,23 +174,26 @@ class StaffController extends Controller
 
     public function update(Request $request, User $staff)
     {
-        try {
-            $data = $request->validate([
-                'email'       => ['required', 'email', 'max:255'],
-                'first_name' => (ValidatorParamsRule::name()),
-                'last_name' => (ValidatorParamsRule::name()),
-                'middle_name' => (ValidatorParamsRule::optionalName()),
-                'address'     => ['nullable', 'string', 'max:500'],
-                'city'        => ['nullable', 'string', 'max:100'],
-                'province'    => ['nullable', 'string', 'max:100'],
-                'gender'      => ['nullable', 'string', 'max:10'],
-                'phone'       => ['nullable', 'string', 'max:20'],
-                'department'  => ['nullable', 'string', 'max:100'],
-                'role'        => ['nullable', 'string', 'max:50'],
-                'birthday'    => ['nullable', 'date'],
-                'photo'       => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-                'employment_status' => ['nullable', 'string', 'max:50'],
-            ]);
+
+        $data = $request->validate([
+            'first_name' => ['max:255', ...$this->requiredString],
+            'last_name' => ['max:255', ...$this->requiredString],
+            'middle_name' => ['max:255', ...$this->nullableString],
+            'address' => ['max:500', ...$this->nullableString],
+            'city' => ['max:100', ...$this->nullableString],
+            'province' => ['max:100', ...$this->nullableString],
+            'gender' => ['max:10', ...$this->nullableString],
+            'postal_code' => ['max:20', ...$this->nullableString],
+            'phone' => ['max:20', ...$this->nullableString],
+            'id_type' => ['max:50', ...$this->nullableString],
+            'id_number' => ['max:100', ...$this->nullableString],
+            'photo' => ['max:5120', ...$this->nullableImage],
+            'role' => ['max:50', ...$this->nullableString],
+            'department' => ['max:100', ...$this->nullableString],
+            'birthday' => [...$this->dateBeforeToday],
+            'employment_status' => ['required', Rule::in(['Active', 'Inactive'])],
+        ]);
+
 
             // Create UserData if it doesn't exist
             $userData = $staff->userData;
@@ -198,10 +213,7 @@ class StaffController extends Controller
                     ->store('staff', 'public');
             }
 
-            // Update users table
-            $staff->update([
-                'email' => $data['email'],
-            ]);
+            
 
             // Map request fields
             $data['date_of_birth'] = $data['birthday'] ?? null;
@@ -219,11 +231,7 @@ class StaffController extends Controller
             $userData->save();
 
             return back()->with('success', 'Employee updated successfully.');
-        } catch (\Exception $e) {
-            return back()->withErrors([
-                'error' => $e->getMessage(),
-            ]);
-        }
+        
     }
 
     /**

@@ -10,10 +10,31 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use App\Rules\ValidatorParamsRule;
 
 
 class PropertiesController extends Controller
 {
+
+    protected array $nullableString;
+    protected array $requiredString;
+    protected array $dateBeforeToday;
+    protected array $dateAfterToday;
+    protected array $dateAfterOrEqualToday;
+    protected array $nullableImage;
+    protected array $requiredImage;
+    
+
+    public function __construct()
+    {
+        $this->nullableString = ValidatorParamsRule::nullableString();
+        $this->requiredString = ValidatorParamsRule::requiredString();
+        $this->dateBeforeToday = ValidatorParamsRule::dateBeforeToday();
+        $this->dateAfterToday = ValidatorParamsRule::dateAfterToday();
+        $this->dateAfterOrEqualToday = ValidatorParamsRule::dateAfterOrEqualToday();
+        $this->nullableImage = ValidatorParamsRule::nullableImage();
+        $this->requiredImage = ValidatorParamsRule::requiredImage();
+    }
     // ── Index ─────────────────────────────────────────────────────────────────
     public function index(Request $request)
     {
@@ -80,11 +101,11 @@ class PropertiesController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name'        => ['required', 'string', 'max:255'],
-            'address'     => ['required', 'string', 'max:500'],
-            'city'        => ['required', 'string', 'max:100'],
+            'name'        => ['max:255', ...$this->requiredString],
+            'address'     => ['max:500', ...$this->requiredString],
+            'city'        => ['max:100', ...$this->requiredString],
             'type'        => ['required', Rule::in(['residential', 'commercial'])],
-            'description' => ['nullable', 'string', 'max:2000'],
+            'description' => ['max:2000', ...$this->nullableString],
             'photo'       => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'amenity_ids' => ['nullable', 'array'],
             'amenity_ids.*' => ['integer', 'exists:amenities,id'],

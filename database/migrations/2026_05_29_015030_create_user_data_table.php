@@ -38,7 +38,8 @@ return new class extends Migration
             // Employment details
             $table->string('job_title')->nullable()->index();
             $table->string('department')->nullable();  // Remove if not needed
-            $table->string('employment_status')->nullable()->index();  // Remove if not needed
+            $table->string('employment_status')->nullable()->index(); 
+            
             //Profile photo
             $table->string('profile_photo_path')->nullable();
             $table->timestamps();

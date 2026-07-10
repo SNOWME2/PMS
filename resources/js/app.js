@@ -4,7 +4,7 @@ import { createApp, h } from "vue";
 import { createInertiaApp } from "@inertiajs/vue3";
 import VueApexCharts from "vue3-apexcharts";
 import { ZiggyVue } from "ziggy-js";
-
+import "@vuepic/vue-datepicker/dist/main.css";
 createInertiaApp({
     resolve: (name) => {
         const pages = import.meta.glob("./Pages/**/*.vue");
