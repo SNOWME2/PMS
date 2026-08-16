@@ -31,8 +31,8 @@ class Lease extends Model
     protected $casts = [
         'start_date'      => 'date',
         'end_date'        => 'date',
-        'rent_price'      => 'float',
-        'deposit_amount'  => 'float',
+        'rent_price'      => 'decimal:2',
+        'deposit_amount'  => 'decimal:2',
         'terminated_at'   => 'datetime',
     ];
 
@@ -62,62 +62,53 @@ class Lease extends Model
     }
 
     /**
-     * Maintenance requests during this lease period.
+     * All maintenance requests logged against this lease's unit.
+     * NOTE: date-range filtering to "during this lease" moved to
+     * maintenanceRequestsDuringLease() below — see comparison notes.
      */
     public function maintenanceRequests(): HasMany
     {
-        return $this->hasMany(MaintenanceRequest::class)
+        return $this->hasMany(MaintenanceRequest::class, 'unit_id', 'unit_id');
+    }
+
+    /**
+     * Maintenance requests that fall within this specific lease's date range.
+     * Safe to call on a single loaded instance; do not eager-load this one.
+     */
+    public function maintenanceRequestsDuringLease()
+    {
+        return $this->maintenanceRequests()
             ->whereDate('created_at', '>=', $this->start_date)
             ->whereDate('created_at', '<=', $this->end_date);
     }
 
     // ── Accessors ─────────────────────────────────────────────────────────────
 
-    /**
-     * Days remaining until lease end date.
-     * Negative if already expired.
-     */
     public function getDaysRemainingAttribute(): int
     {
         return now()->diffInDays($this->end_date, false);
     }
 
-    /**
-     * Is the lease currently active?
-     * (status = active AND end_date >= today)
-     */
     public function getIsActiveAttribute(): bool
     {
-        return $this->status === 'active' && $this->end_date >= now()->toDateString();
+        return $this->status === 'active' && $this->end_date->toDateString() >= now()->toDateString();
     }
 
-    /**
-     * Is the lease expiring soon? (within 30 days)
-     */
     public function getIsExpiringAttribute(): bool
     {
         return $this->is_active && $this->days_remaining >= 0 && $this->days_remaining <= 30;
     }
 
-    /**
-     * Has the lease expired?
-     */
     public function getIsExpiredAttribute(): bool
     {
-        return $this->end_date < now()->toDateString() && $this->status !== 'terminated';
+        return $this->end_date->toDateString() < now()->toDateString() && $this->status !== 'terminated';
     }
 
-    /**
-     * Lease duration in months
-     */
     public function getDurationMonthsAttribute(): int
     {
         return $this->start_date->diffInMonths($this->end_date);
     }
 
-    /**
-     * Total rent over the full lease term
-     */
     public function getTotalRentAttribute(): float
     {
         $months = $this->start_date->diffInMonths($this->end_date) + 1;
@@ -125,16 +116,19 @@ class Lease extends Model
     }
 
     /**
-     * Total received from this tenant (sum of all payments)
+     * Total received from this tenant (sum of all payments).
+     * Prefer eager-loading `total_paid_sum` via withSum() when listing
+     * many leases — see comparison notes for why.
      */
     public function getTotalPaidAttribute(): float
     {
+        if (array_key_exists('total_paid_sum', $this->attributes)) {
+            return (float) $this->attributes['total_paid_sum'];
+        }
+
         return $this->payments()->where('status', 'paid')->sum('amount');
     }
 
-    /**
-     * Amount still owed
-     */
     public function getBalanceAttribute(): float
     {
         return $this->total_rent - $this->total_paid;
@@ -142,37 +136,25 @@ class Lease extends Model
 
     // ── Scopes ────────────────────────────────────────────────────────────────
 
-    /**
-     * Only active leases (status = 'active' AND end_date >= today)
-     */
     public function scopeActiveDate($query)
     {
         return $query
             ->where('status', 'active')
-            ->whereDate('end_date', '>=', now());
+            ->where('end_date', '>=', now()->toDateString());
     }
 
-    /**
-     * Only expired leases (end_date < today AND status != 'terminated')
-     */
     public function scopeExpired($query)
     {
         return $query
-            ->whereDate('end_date', '<', now())
+            ->where('end_date', '<', now()->toDateString())
             ->where('status', '!=', 'terminated');
     }
 
-    /**
-     * Only terminated leases
-     */
     public function scopeTerminated($query)
     {
         return $query->where('status', 'terminated')->whereNotNull('terminated_at');
     }
 
-    /**
-     * Leases expiring within N days
-     */
     public function scopeExpiringWithin($query, int $days = 30)
     {
         return $query
@@ -183,33 +165,21 @@ class Lease extends Model
             ]);
     }
 
-    /**
-     * Leases for a specific unit
-     */
     public function scopeForUnit($query, int $unitId)
     {
         return $query->where('unit_id', $unitId);
     }
 
-    /**
-     * Leases for a specific tenant
-     */
     public function scopeForTenant($query, int $tenantId)
     {
         return $query->where('tenant_id', $tenantId);
     }
 
-    /**
-     * Leases for a specific property (via unit→property)
-     */
     public function scopeForProperty($query, int $propertyId)
     {
         return $query->whereHas('unit', fn($q) => $q->where('property_id', $propertyId));
     }
 
-    /**
-     * Exclude terminated leases
-     */
     public function scopeActive($query)
     {
         return $query->where('status', '!=', 'terminated');
@@ -217,10 +187,6 @@ class Lease extends Model
 
     // ── Methods ───────────────────────────────────────────────────────────────
 
-    /**
-     * Terminate the lease early with a reason.
-     * Updates unit status to vacant.
-     */
     public function terminate(string $reason): void
     {
         $this->update([
@@ -229,21 +195,22 @@ class Lease extends Model
             'termination_reason'  => $reason,
         ]);
 
-        // Mark unit as vacant
         $this->unit->update(['status' => 'vacant']);
     }
 
     /**
      * Renew the lease for another period (in months).
-     * Returns the new Lease instance.
      */
     public function renew(int $monthsToAdd = 12, float $newRentPrice = null): Lease
     {
+        $newStart = $this->end_date->copy()->addDay();
+        $newEnd   = $newStart->copy()->addMonths($monthsToAdd);
+
         return Lease::create([
             'unit_id'          => $this->unit_id,
             'tenant_id'        => $this->tenant_id,
-            'start_date'       => $this->end_date->addDay(),
-            'end_date'         => $this->end_date->addMonths($monthsToAdd),
+            'start_date'       => $newStart,
+            'end_date'         => $newEnd,
             'rent_price'       => $newRentPrice ?? $this->rent_price,
             'deposit_amount'   => $this->deposit_amount,
             'status'           => 'active',
@@ -251,35 +218,21 @@ class Lease extends Model
         ]);
     }
 
-    /**
-     * Total amount billed (all months of the lease)
-     */
     public function totalBilled(): float
     {
         $monthsCount = $this->start_date->diffInMonths($this->end_date) + 1;
         return $this->rent_price * $monthsCount;
     }
 
-    /**
-     * Mark lease as expired (status = 'expired') when it reaches end_date.
-     * Useful for batch jobs or cron tasks.
-     */
     public function markAsExpiredIfPassed(): void
     {
-        if ($this->end_date < now()->toDateString() && $this->status === 'active') {
+        if ($this->end_date->toDateString() < now()->toDateString() && $this->status === 'active') {
             $this->update(['status' => 'expired']);
         }
     }
 
-    /**
-     * Generate a monthly invoice for this lease.
-     * Useful for billing automation.
-     */
     public function createMonthlyInvoice(Carbon $forMonth): void
     {
-        // Logic would integrate with a Payment or Invoice model
-        // This is a placeholder for the pattern
-
         Payment::create([
             'lease_id'     => $this->id,
             'amount'       => $this->rent_price,

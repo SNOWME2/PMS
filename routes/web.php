@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PropertiesController;
 use App\Http\Controllers\UnitsController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\LeasesController;
+use App\Http\Controllers\TenantsController;
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -29,7 +31,12 @@ Route::middleware(['auth'])->group(function () {
 
     
 });
-
+Route::get('/speed-test', function () {
+    return response()->json([
+        'message' => 'OK',
+        'time' => microtime(true),
+    ]);
+});
 Route::middleware(['auth'])->group(function () {
 
 
@@ -59,4 +66,9 @@ Route::middleware(['auth'])->group(function () {
 
 
     Route::resource('staffs', StaffController::class);
+
+    Route::resource('tenants', TenantsController::class);
+    Route::resource('leases', LeasesController::class);
+    Route::post('leases/{lease}/terminate', [LeasesController::class, 'terminate'])->name('leases.terminate');
+    Route::post('leases/{lease}/renew', [LeasesController::class, 'renew'])->name('leases.renew');
 });

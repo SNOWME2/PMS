@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup >
 import { ref, computed } from "vue";
 import { useForm, Link } from "@inertiajs/vue3";
 import { Button } from "@/components/ui/button";
@@ -18,26 +18,17 @@ import {
 import { Building2, ChevronRight, Upload, X, Check } from "lucide-vue-next";
 import { property } from "zod/v4";
 
-interface Amenity {
-    id: number;
-    name: string;
-    icon: string;
-}
-interface Property {
-    id?: number;
-    name: string;
-    address: string;
-    city: string;
-    type: string;
-    description: string;
-    photo: string | null;
-    amenity_ids: number[];
-}
 
-const props = defineProps<{
-    property?: Property;
-    amenities: Amenity[];
-}>();
+
+const props = defineProps({
+    property: {
+        type: Object,
+        default:undefined},
+    amenities:{
+        type:Object,
+        required:true,
+    },
+});
 
 const isEditing = computed(() => !!props.property?.id);
 
@@ -47,22 +38,22 @@ const form = useForm({
     city: props.property?.city ?? "",
     type: props.property?.type ?? "residential",
     description: props.property?.description ?? "",
-    photo: null as File | null,
-    amenity_ids: props.property?.amenity_ids ?? ([] as number[]),
+    photo: null ,
+    amenity_ids: props.property?.amenity_ids ?? [],
 });
 
-const previewUrl = ref<string | null>(
+const previewUrl = ref(
     props.property?.photo ? `/storage/${props.property.photo}` : null,
-);
+)
 
-const toggleAmenity = (id: number) => {
+const toggleAmenity = (id) => {
     const idx = form.amenity_ids.indexOf(id);
     if (idx === -1) form.amenity_ids.push(id);
     else form.amenity_ids.splice(idx, 1);
 };
 
-const handlePhoto = (e: Event) => {
-    const file = (e.target as HTMLInputElement).files?.[0];
+const handlePhoto = (e) => {
+    const file = e.target.files?.[0];
     if (!file) return;
     form.photo = file;
     previewUrl.value = URL.createObjectURL(file);
@@ -80,7 +71,7 @@ const submit = () => {
         form.transform((data) => ({
             ...data,
             _method: "put", // This tells Laravel to treat the POST as a PUT
-        })).post(route("properties.update", props.property!.id), {
+        })).post(route("properties.update", props.property.id), {
             forceFormData: true, // Required for file uploads to work correctly
         });
         console.log("Updating property with data:", form);
@@ -94,7 +85,7 @@ const submit = () => {
     <div class="flex h-screen bg-background overflow-hidden">
         <AppSidebar />
 
-        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <div class="flex-1 flex flex-col min-w-0 overflow-auto">
             <PageHeader
                 title="Properties"
                 subtitle="Manage your properties and units"

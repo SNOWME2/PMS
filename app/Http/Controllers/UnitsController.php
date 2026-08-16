@@ -6,11 +6,16 @@ use App\Models\Amenity;
 use App\Models\Property;
 use App\Models\Unit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class UnitsController extends Controller
 {
+    private const INDEX_CACHE_TTL = 60 * 60 * 6; // 6 hours
+    private const SHOW_CACHE_TTL  = 60 * 60 * 6;  // 6 hours
+    private const LIST_CACHE_TTL  = 60 * 60;      // 1 hour — for the small dropdown lists below
+
     // ── Index ─────────────────────────────────────────────────────────────────
     /**
      * List all units across all properties
@@ -18,71 +23,91 @@ class UnitsController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Unit::query()
-            ->with('property:id,name,address,city', 'activeLease.tenant', 'maintenanceRequests')
-            ->orderBy('property_id')
-            ->orderBy('floor_number')
-            ->orderBy('unit_number');
+        $version  = $this->cacheVersion();
+        $cacheKey = "units.index.v{$version}." . md5(json_encode([
+            'search'      => $request->input('search'),
+            'property_id' => $request->input('property_id'),
+            'floor'       => $request->input('floor'),
+            'status'      => $request->input('status'),
+        ]));
 
-        // Filter by property
-        if ($propertyId = $request->integer('property_id')) {
-            $query->where('property_id', $propertyId);
-        }
+        $units = Cache::remember(
+            $cacheKey,
+            now()->addSeconds(self::INDEX_CACHE_TTL),
+            function () use ($request) {
+                $query = Unit::query()
+                    ->with([
+                        'property:id,name,address,city',
+                        'activeLease.tenant:id,name',
+                        // Cap and narrow the columns pulled per unit — the index page only
+                        // needs enough to render a status badge, not full request records.
+                        'maintenanceRequests' => fn($q) => $q
+                            ->select('id', 'unit_id', 'status')
+                            ->latest()
+                            ->limit(5),
+                    ])
+                    ->orderBy('property_id')
+                    ->orderBy('floor_number')
+                    ->orderBy('unit_number');
 
-        // Filter by floor
-        if ($floor = $request->integer('floor')) {
-            $query->where('floor_number', $floor);
-        }
+                if ($request->filled('property_id')) {
+                    $query->where('property_id', $request->integer('property_id'));
+                }
 
-        // Filter by status
-        if ($status = $request->input('status')) {
-            $query->where('status', $status);
-        }
+                // NOTE: was `if ($floor = $request->integer('floor'))`, which treats
+                // floor 0 (ground floor) as "no filter" since 0 is falsy in PHP.
+                // filled() checks presence in the request instead of truthiness.
+                if ($request->filled('floor')) {
+                    $query->where('floor_number', $request->integer('floor'));
+                }
 
-        // Search by unit number, type, or property name
-        if ($search = $request->input('search')) {
-            $query->where(
-                fn($q) => $q
-                    ->where('unit_number', 'like', "%{$search}%")
-                    ->orWhere('type', 'like', "%{$search}%")
-                    ->orWhereHas('property', fn($p) => $p->where('name', 'like', "%{$search}%"))
-            );
-        }
+                if ($status = $request->input('status')) {
+                    $query->where('status', $status);
+                }
 
-        $units = $query->get()->map(fn($u) => [
-            'id'             => $u->id,
-            'unit_number'    => $u->unit_number,
-            'type'           => $u->type,
-            'floor_number'   => $u->floor_number,
-            'size_sqm'       => $u->size_sqm,
-            'rent_price'     => $u->rent_price,
-            'status'         => $u->status,
-            'property'       => [
-                'id'      => $u->property->id,
-                'name'    => $u->property->name,
-                'address' => $u->property->address,
-                'city'    => $u->property->city,
-            ],
-            'active_lease'   => $u->activeLease ? [
-                'id'        => $u->activeLease->id,
-                'end_date'  => $u->activeLease->end_date->toISOString(),
-                'tenant'    => [
-                    'id'   => $u->activeLease->tenant->id,
-                    'name' => $u->activeLease->tenant->name,
-                ],
-            ] : null,
-            'maintenance_requests' => $u->maintenanceRequests->map(fn($m) => [
-                'id'     => $m->id,
-                'status' => $m->status,
-            ])->toArray(),
-        ]);
+                if ($search = $request->input('search')) {
+                    $query->where(
+                        fn($q) => $q
+                            ->where('unit_number', 'like', "%{$search}%")
+                            ->orWhere('type', 'like', "%{$search}%")
+                            ->orWhereHas('property', fn($p) => $p->where('name', 'like', "%{$search}%"))
+                    );
+                }
 
-        $properties = Property::orderBy('name')->get(['id', 'name']);
+                return $query->get()->map(fn($u) => [
+                    'id'           => $u->id,
+                    'unit_number'  => $u->unit_number,
+                    'type'         => $u->type,
+                    'floor_number' => $u->floor_number,
+                    'size_sqm'     => $u->size_sqm,
+                    'rent_price'   => $u->rent_price,
+                    'status'       => $u->status,
+                    'property'     => [
+                        'id'      => $u->property->id,
+                        'name'    => $u->property->name,
+                        'address' => $u->property->address,
+                        'city'    => $u->property->city,
+                    ],
+                    'active_lease' => $u->activeLease ? [
+                        'id'       => $u->activeLease->id,
+                        'end_date' => $u->activeLease->end_date->toISOString(),
+                        'tenant'   => [
+                            'id'   => $u->activeLease->tenant->id,
+                            'name' => $u->activeLease->tenant->name,
+                        ],
+                    ] : null,
+                    'maintenance_requests' => $u->maintenanceRequests->map(fn($m) => [
+                        'id'     => $m->id,
+                        'status' => $m->status,
+                    ])->toArray(),
+                ]);
+            }
+        );
 
         return Inertia::render('Units/Index', [
-            'units'       => $units,
-            'properties'  => $properties,
-            'filters'     => $request->only(['search', 'property_id', 'floor', 'status']),
+            'units'      => $units,
+            'properties' => $this->cachedPropertiesList(),
+            'filters'    => $request->only(['search', 'property_id', 'floor', 'status']),
         ]);
     }
 
@@ -90,8 +115,8 @@ class UnitsController extends Controller
     public function create(Request $request)
     {
         return Inertia::render('Units/Form', [
-            'amenities'         => Amenity::orderBy('name')->get(['id', 'name', 'icon']),
-            'properties'        => Property::orderBy('name')->get(['id', 'name']),
+            'amenities'         => $this->cachedAmenitiesList(),
+            'properties'        => $this->cachedPropertiesList(),
             'defaultPropertyId' => $request->integer('property_id') ?: null,
         ]);
     }
@@ -105,7 +130,6 @@ class UnitsController extends Controller
                 'required',
                 'string',
                 'max:20',
-                // Unit number must be unique within the same property
                 Rule::unique('units')->where('property_id', $request->input('property_id')),
             ],
             'type'           => ['required', Rule::in(['studio', '1BR', '2BR', '3BR', 'penthouse', 'commercial'])],
@@ -122,72 +146,81 @@ class UnitsController extends Controller
         $unit = Unit::create($data);
         $unit->amenities()->sync($request->input('amenity_ids', []));
 
-        // Update property occupancy count
-        $this->refreshPropertyOccupancy($unit->property_id);
+        $this->invalidateCache();
 
-        return redirect()->route('properties.show', $unit->property_id)
+        return redirect()
+            ->route('properties.show', $unit->property_id)
             ->with('success', "Unit {$unit->unit_number} created.");
     }
 
     // ── Show ──────────────────────────────────────────────────────────────────
     public function show(Unit $unit)
     {
-        $unit->load([
-            'property:id,name',
-            'amenities',
-            'activeLease.tenant',
-            'leases' => fn($q) => $q->with('tenant:id,name')->latest()->limit(10),
-            'maintenanceRequests' => fn($q) => $q->latest()->limit(20),
-        ]);
+        $version  = $this->cacheVersion();
+        $cacheKey = "units.show.v{$version}.{$unit->id}";
 
-        return Inertia::render('Units/Show', [
-            'unit' => [
-                'id'             => $unit->id,
-                'unit_number'    => $unit->unit_number,
-                'type'           => $unit->type,
-                'floor_number'   => $unit->floor_number,
-                'size_sqm'       => $unit->size_sqm,
-                'rent_price'     => $unit->rent_price,
-                'deposit_amount' => $unit->deposit_amount,
-                'status'         => $unit->status,
-                'description'    => $unit->description,
-                'property'       => $unit->property,
-                'amenities'      => $unit->amenities,
+        $data = Cache::remember(
+            $cacheKey,
+            now()->addSeconds(self::SHOW_CACHE_TTL),
+            function () use ($unit) {
+                $unit->load([
+                    'property:id,name',
+                    'amenities',
+                    'activeLease.tenant',
+                    'leases' => fn($q) => $q->with('tenant:id,name')->latest()->limit(10),
+                    'maintenanceRequests' => fn($q) => $q->latest()->limit(20),
+                ]);
 
-                'active_lease'   => $unit->activeLease ? [
-                    'id'             => $unit->activeLease->id,
-                    'start_date'     => $unit->activeLease->start_date,
-                    'end_date'       => $unit->activeLease->end_date,
-                    'rent_price'     => $unit->activeLease->rent_price,
-                    'deposit_amount' => $unit->activeLease->deposit_amount,
-                    'status'         => $unit->activeLease->status,
-                    'tenant'         => [
-                        'id'    => $unit->activeLease->tenant->id,
-                        'name'  => $unit->activeLease->tenant->name,
-                        'email' => $unit->activeLease->tenant->email,
-                        'phone' => $unit->activeLease->tenant->phone,
-                    ],
-                ] : null,
+                return [
+                    'id'             => $unit->id,
+                    'unit_number'    => $unit->unit_number,
+                    'type'           => $unit->type,
+                    'floor_number'   => $unit->floor_number,
+                    'size_sqm'       => $unit->size_sqm,
+                    'rent_price'     => $unit->rent_price,
+                    'deposit_amount' => $unit->deposit_amount,
+                    'status'         => $unit->status,
+                    'description'    => $unit->description,
+                    'property'       => $unit->property,
+                    'amenities'      => $unit->amenities,
 
-                'lease_history' => $unit->leases
-                    ->where('id', '!=', $unit->activeLease?->id)
-                    ->map(fn($l) => [
-                        'id'         => $l->id,
-                        'start_date' => $l->start_date,
-                        'end_date'   => $l->end_date,
-                        'rent_price' => $l->rent_price,
-                        'tenant'     => $l->tenant ? ['id' => $l->tenant->id, 'name' => $l->tenant->name] : null,
-                    ])->values(),
+                    'active_lease' => $unit->activeLease ? [
+                        'id'             => $unit->activeLease->id,
+                        'start_date'     => $unit->activeLease->start_date,
+                        'end_date'       => $unit->activeLease->end_date,
+                        'rent_price'     => $unit->activeLease->rent_price,
+                        'deposit_amount' => $unit->activeLease->deposit_amount,
+                        'status'         => $unit->activeLease->status,
+                        'tenant'         => [
+                            'id'    => $unit->activeLease->tenant->id,
+                            'name'  => $unit->activeLease->tenant->name,
+                            'email' => $unit->activeLease->tenant->email,
+                            'phone' => $unit->activeLease->tenant->phone,
+                        ],
+                    ] : null,
 
-                'maintenance_requests' => $unit->maintenanceRequests->map(fn($r) => [
-                    'id'         => $r->id,
-                    'title'      => $r->title,
-                    'status'     => $r->status,
-                    'priority'   => $r->priority,
-                    'created_at' => $r->created_at->toISOString(),
-                ]),
-            ],
-        ]);
+                    'lease_history' => $unit->leases
+                        ->where('id', '!=', $unit->activeLease?->id)
+                        ->map(fn($l) => [
+                            'id'         => $l->id,
+                            'start_date' => $l->start_date,
+                            'end_date'   => $l->end_date,
+                            'rent_price' => $l->rent_price,
+                            'tenant'     => $l->tenant ? ['id' => $l->tenant->id, 'name' => $l->tenant->name] : null,
+                        ])->values(),
+
+                    'maintenance_requests' => $unit->maintenanceRequests->map(fn($r) => [
+                        'id'         => $r->id,
+                        'title'      => $r->title,
+                        'status'     => $r->status,
+                        'priority'   => $r->priority,
+                        'created_at' => $r->created_at->toISOString(),
+                    ]),
+                ];
+            }
+        );
+
+        return Inertia::render('Units/Show', ['unit' => $data]);
     }
 
     // ── Edit ──────────────────────────────────────────────────────────────────
@@ -209,8 +242,8 @@ class UnitsController extends Controller
                 'description'    => $unit->description,
                 'amenity_ids'    => $unit->amenities->pluck('id')->toArray(),
             ],
-            'amenities'  => Amenity::orderBy('name')->get(['id', 'name', 'icon']),
-            'properties' => Property::orderBy('name')->get(['id', 'name']),
+            'amenities'  => $this->cachedAmenitiesList(),
+            'properties' => $this->cachedPropertiesList(),
         ]);
     }
 
@@ -245,17 +278,13 @@ class UnitsController extends Controller
             ]);
         }
 
-        $oldPropertyId = $unit->property_id;
         $unit->update($data);
         $unit->amenities()->sync($request->input('amenity_ids', []));
 
-        // Refresh occupancy on old and new property (in case property changed)
-        $this->refreshPropertyOccupancy($oldPropertyId);
-        if ($oldPropertyId !== $unit->property_id) {
-            $this->refreshPropertyOccupancy($unit->property_id);
-        }
+        $this->invalidateCache();
 
-        return redirect()->route('units.show', $unit)
+        return redirect()
+            ->route('units.show', $unit)
             ->with('success', "Unit {$unit->unit_number} updated.");
     }
 
@@ -273,30 +302,66 @@ class UnitsController extends Controller
         }
 
         $propertyId = $unit->property_id;
-        $unitNumber  = $unit->unit_number;
+        $unitNumber = $unit->unit_number;
 
-        $unit->delete(); // SoftDeletes
+        $unit->delete(); // Uses SoftDeletes
 
-        $this->refreshPropertyOccupancy($propertyId);
+        $this->invalidateCache();
 
-        return redirect()->route('properties.show', $propertyId)
+        return redirect()
+            ->route('properties.show', $propertyId)
             ->with('success', "Unit {$unitNumber} deleted.");
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+    // ── Cache helpers ─────────────────────────────────────────────────────────
+    private function cacheVersion(): int
+    {
+        return Cache::get('units.cache.version', 1);
+    }
 
     /**
-     * Recalculate and persist the occupied_units count on the parent property.
-     * Call this any time a unit's status changes.
+     * Bump both this controller's own cache version and Properties' — a unit
+     * being created, edited, or deleted changes its parent property's
+     * unit/occupancy counts, which PropertiesController's cached index/show
+     * responses depend on.
+     *
+     * This replaces the old refreshPropertyOccupancy(), which wrote to a
+     * `properties.occupied_units` column that PropertiesController never
+     * selects or relies on — that controller computes occupancy fresh via
+     * withCount() on every read, so persisting a separate stored count risked
+     * either throwing (if the column doesn't exist) or silently drifting out
+     * of sync with the real per-unit statuses (if it does). Bumping the
+     * version just makes the next read recompute from source, which is both
+     * simpler and can't go stale.
      */
-    private function refreshPropertyOccupancy(int $propertyId): void
+    private function invalidateCache(): void
     {
-        $property = Property::find($propertyId);
+        $version = $this->cacheVersion();
+        Cache::put('units.cache.version', $version + 1, now()->addDays(30));
 
-        if (! $property) return;
+        $propVersion = Cache::get('properties.cache.version', 1);
+        Cache::put('properties.cache.version', $propVersion + 1, now()->addDays(30));
+    }
 
-        $property->update([
-            'occupied_units' => $property->units()->where('status', 'occupied')->count(),
-        ]);
+    private function cachedPropertiesList()
+    {
+        $propVersion = Cache::get('properties.cache.version', 1);
+
+        return Cache::remember(
+            "properties.list.v{$propVersion}",
+            now()->addSeconds(self::LIST_CACHE_TTL),
+            fn() => Property::orderBy('name')->get(['id', 'name'])
+        );
+    }
+
+    private function cachedAmenitiesList()
+    {
+        $amenityVersion = Cache::get('amenities.cache.version', 1);
+
+        return Cache::remember(
+            "amenities.list.v{$amenityVersion}",
+            now()->addSeconds(self::LIST_CACHE_TTL),
+            fn() => Amenity::orderBy('name')->get(['id', 'name', 'icon'])
+        );
     }
 }

@@ -1,53 +1,37 @@
-<script setup lang="ts">
+<script setup>
 import { watch, ref } from "vue";
 import { useForm } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
 import { CircleCheck, CircleX, LoaderCircle, X } from "lucide-vue-next";
 import { VueDatePicker } from '@vuepic/vue-datepicker';
 
-interface Staff {
-    id: number;
-    name: string;
-    first_name: string;
-    middle_name: string | null;
-    last_name: string;
-    initials: string;
-    email: string;
-    phone: string | null;
-    department: string | null;
-    job_title: string | null;
-    role: string | null;
+const props = defineProps({
+    open: {
+        type: Boolean,
+        required: true,
+    },
+    mode: {
+        type: String, // "add" | "edit" | "view"
+        required: true,
+    },
+    staff: {
+        type: Object, // Staff | null
+        default: null,
+    },
+});
 
-    gender: string | null;
-    birthday: string | null;
-    address: string | null;
-    city: string | null;
-    province: string | null;
-    photo: string | null;
-    password: string | null;
-    employment_status: string | null;
-    status: "Active" | "Inactive" | null;
-    last_login: string | null;
-}
-
-const props = defineProps<{
-    open: boolean;
-    mode: "add" | "edit" | "view";
-    staff: Staff | null;
-}>();
-
-const emit = defineEmits<{ close: [] }>();
+const emit = defineEmits(["close"]);
 
 const isViewing = () => props.mode === "view";
 const isEditing = () => props.mode === "edit";
 const isAdding = () => props.mode === "add";
 
 
-const previewUrl = ref<string | null>(
+const previewUrl = ref(
     props.staff?.photo ? `/storage/${props.staff.photo}` : null,
 );
-const handlePhoto = (e: Event) => {
-    const file = (e.target as HTMLInputElement).files?.[0];
+const handlePhoto = (e) => {
+    const file = e.target.files?.[0];
     if (!file) return;
     form.photo = file;
     previewUrl.value = URL.createObjectURL(file);
@@ -75,9 +59,9 @@ const form = useForm({
     address: "",
     city: "",
     province: "",
-    photo: null as File | null,
+    photo: null,
     password: "",
-    status: "Active" as "Active" | "Inactive",
+    status: "Active",
     employment_status: "",
     last_login: "",
 });
@@ -119,6 +103,16 @@ watch(
     { immediate: true }
 );
 
+const formatDate = (date) => {
+    if (!date) return "—";
+
+    return new Intl.DateTimeFormat("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+    }).format(new Date(date));
+};
+
 const submit = () => {
 
     if (isEditing() && props.staff) {
@@ -133,7 +127,7 @@ const submit = () => {
 
                 emit("close");
             },
-            
+
         });
     } else {
         form.post(route("staffs.store"), {
@@ -170,10 +164,11 @@ const readonlyClass =
                         <!-- Header -->
                         <div class="bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-5">
                             <h2 class="text-white font-bold text-lg">
-                                {{ isEditing() ? "✏️ Edit Employee" : isViewing() ? "👁️ View Employee" : "👤 Add New  Employee" }}
+                                {{ isEditing() ? "✏️ Edit Employee" : isViewing() ? "👁️ View Employee" : "👤 Add New Employee" }}
                             </h2>
                             <p class="text-indigo-200 text-xs mt-0.5">
-                                {{ isEditing() ? "Update the employee information below." : isViewing() ? "Reviewingemployee details." : "Fill in the details to add a new team member." }}
+                                {{ isEditing() ? "Update the employee information below." : isViewing() ?
+                                    "Reviewingemployee details." : "Fill in the details to add a new team member." }}
                             </p>
                         </div>
 
@@ -318,13 +313,13 @@ const readonlyClass =
                                 <div>
                                     <label
                                         class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Birthday</label>
-                                    <p v-if="isViewing()" :class="readonlyClass">{{ form.birthday || '—' }}</p>
-                                   <VueDatePicker v-model="form.birthday" :max-date="new Date()" :model-type="'yyyy-MM-dd'"
-                                       :time-config="{ enableTimePicker: false }"
-                                        :formats="{ input: 'LLLL dd, yyyy ' }"
-                                        placeholder="Select birthday" 
-                                        :auto-apply="true"
-                                       />
+                                    <p v-if="isViewing()" :class="readonlyClass">{{ formatDate(form.birthday) || '—' }}
+                                    </p>
+                                    <VueDatePicker v-if="!isViewing()" :ui="{ input: inputClass('border-slate-200') }"
+                                        v-model="form.birthday" :max-date="new Date()" :model-type="'yyyy-MM-dd'"
+                                        :time-config="{ enableTimePicker: false }"
+                                        :formats="{ input: 'LLLL dd, yyyy ' }" placeholder="Select birthday"
+                                        :auto-apply="true" />
                                     <p v-if="form.errors.birthday" class="mt-1 text-sm text-red-600">
                                         {{ form.errors.birthday }}
                                     </p>

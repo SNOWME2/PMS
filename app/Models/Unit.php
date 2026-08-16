@@ -14,7 +14,6 @@ use App\Models\Amenity;
 use App\Models\Lease;
 use App\Models\MaintenanceRequest;
 
-
 class Unit extends Model
 {
     use HasFactory, SoftDeletes;
@@ -33,9 +32,9 @@ class Unit extends Model
 
     protected $casts = [
         'floor_number'   => 'integer',
-        'size_sqm'       => 'float',
-        'rent_price'     => 'float',
-        'deposit_amount' => 'float',
+        'size_sqm'       => 'decimal:2',
+        'rent_price'     => 'decimal:2',
+        'deposit_amount' => 'decimal:2',
     ];
 
     // ── Relationships ─────────────────────────────────────────────────────────
@@ -89,5 +88,10 @@ class Unit extends Model
     public function scopeForProperty($query, int $propertyId)
     {
         return $query->where('property_id', $propertyId);
+    }
+
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('floor_number')->orderBy('unit_number');
     }
 }

@@ -8,9 +8,11 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
-
+use App\Models\UserData;
+use App\Rules\ValidatorParamsRule;
 class CreateNewUser implements CreatesNewUsers
 {
+   
     use PasswordValidationRules;
 
     /**
@@ -20,10 +22,13 @@ class CreateNewUser implements CreatesNewUsers
      *
      * @throws ValidationException
      */
+    protected array $requiredString;
+  
     public function create(array $input): User
     {
         Validator::make($input, [
-            'name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required','string','max:100'],
+            'first_name' => ['required', 'string', 'max:100',],
             'email' => [
                 'required',
                 'string',
@@ -35,9 +40,11 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
         ])->validate();
 
-        
+        UserData::Create([
+            'first_name' => $input['']
+        ]);
         return User::create([
-            'name' => $input['name'],
+            // 'name' => $input['name'],
             'email' => $input['email'],
             'password' => Hash::make($input['password']),
             'role' => 'tenant',

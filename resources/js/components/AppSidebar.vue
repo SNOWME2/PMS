@@ -1,5 +1,5 @@
-<script setup lang="ts">
-import { computed, ref, type Component } from 'vue'
+<script setup lang="js">
+import { computed, ref } from 'vue'
 import { router, Link } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -40,54 +40,27 @@ import {
 
 import { usePage } from '@inertiajs/vue3'
 
-interface PageProps {
-  auth: {
-    user: {
-      name: string
-      email: string
-      role: string
-    }
-  }
-  [key: string]: any
-}
-
-interface NavChild {
-  label: string
-  href: string
-  component: string
-}
-
-interface NavItem {
-  label: string
-  icon: Component
-  badge: string | null
-  href: string
-  roles: string[]
-  component?: string
-  children?: NavChild[]
-}
-
 const logout = () => {
   router.post('/logout')
 }
 
-const page = usePage<PageProps>()
+const page = usePage()
 
-const isActive = (componentName: string) => {
+const isActive = (componentName) => {
   return page.component === componentName
 }
-const isParentActive = (item: NavItem) => {
+const isParentActive = (item) => {
   return item.children?.some(child =>
     page.component === child.component
   )
 }
 
-const isOpen = (item: NavItem) => {
+const isOpen = (item) => {
   return isParentActive(item)
 }
-const user = page.props.auth.user
-const role = page.props.auth.user.role
-const getDashboardRoute = (role: string) => {
+const user = page.props.auth?.user || { name: '', role: '' }
+const role = user.role || (page.props.auth?.user?.role ?? '')
+const getDashboardRoute = (role) => {
   switch (role) {
     case 'admin':
       return '/admin/dashboard'
@@ -100,7 +73,7 @@ const getDashboardRoute = (role: string) => {
 }
 const collapsed = ref(false)
 const activeItem = ref('Dashboard')
-const openGroup = ref<string | null>(null)
+const openGroup = ref(null)
 
 const navItems = [
   {
@@ -200,8 +173,8 @@ const bottomItems = [
 ]
 
 const toggleCollapse = () => (collapsed.value = !collapsed.value)
-const setActive = (label: string) => (activeItem.value = label)
-const toggleGroup = (label: string) =>
+const setActive = (label) => (activeItem.value = label)
+const toggleGroup = (label) =>
   (openGroup.value = openGroup.value === label ? null : label)
 </script>
 
@@ -284,7 +257,7 @@ const toggleGroup = (label: string) =>
                 <div class="flex flex-col gap-px pl-5 pt-0.5 pb-1">
                   <button v-for="child in item.children" :key="child.label" :class="[
                     'text-left px-2.5 py-1.25 rounded-md text-[12.5px] border-l transition-colors',
-                    isActive(child.component as string)
+                    isActive(child.component)
                       ? 'text-sidebar-primary border-sidebar-primary font-medium'
                       : 'text-sidebar-foreground/60 border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-foreground',
                   ]" @click="router.visit(child.href)">
@@ -301,7 +274,7 @@ const toggleGroup = (label: string) =>
               <TooltipTrigger as-child>
                 <button :class="[
                   'relative flex items-center justify-center w-full py-1.75 rounded-lg transition-colors',
-                  isActive(item.component as string)
+                  isActive(item.component   )
                     ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                     : 'text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground',
                 ]" @click="setActive(item.label)">
@@ -318,7 +291,7 @@ const toggleGroup = (label: string) =>
           <template v-else>
             <button :class="[
               'flex items-center gap-2.5 w-full px-2.5 py-1.75 rounded-lg text-[13.5px] font-medium transition-colors',
-              isActive(item.component as string)
+              isActive(item.component)
                 ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                 : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground',
             ]" @click="router.visit(item.href)">
@@ -363,7 +336,7 @@ const toggleGroup = (label: string) =>
         <Avatar class="w-8 h-8 shrink-0">
           <AvatarImage src="" alt="" />
           <AvatarFallback class="bg-sidebar-primary text-sidebar-primary-foreground text-xs font-semibold">
-            {{ user.name.slice(0, 2).toUpperCase() }}
+            {{ user.name?.slice(0, 2).toUpperCase() }}
           </AvatarFallback>
         </Avatar>
 

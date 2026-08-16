@@ -27,14 +27,16 @@ return new class extends Migration
             $table->string('name')->index();
             $table->string('address')->index();
             $table->string('city')->index();
-            $table->enum('type', ['residential', 'commercial'])->default('residential');
+            $table->enum('type', ['residential', 'commercial'])->default('residential')->index();
             $table->text('description')->nullable();
             $table->string('photo')->nullable();           // relative storage path
             $table->unsignedInteger('occupied_units')->default(0);  // cached counter
             $table->timestamps();
             $table->softDeletes();
+
+            // speeds up ->latest() ordering and any date-range filtering
+            $table->index('created_at');
         });
-        
 
         // ── property_amenities (pivot) ─────────────────────────────────────────
         Schema::create('property_amenities', function (Blueprint $table) {
@@ -60,6 +62,14 @@ return new class extends Migration
 
             // unit_number unique per property (not globally)
             $table->unique(['property_id', 'unit_number']);
+
+            // composite index: covers withCount/whereHas status filters scoped to a property,
+            // and the (floor_number, unit_number) ordering used in show()
+            $table->index(['property_id', 'status']);
+            $table->index(['property_id', 'floor_number', 'unit_number']);
+
+            // status filtered on its own (e.g. global vacant/maintenance dashboards)
+            $table->index('status');
         });
 
         // ── unit_amenities (pivot) ────────────────────────────────────────────

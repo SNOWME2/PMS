@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup >
 import { ref, computed } from 'vue'
 import { router, Link } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
@@ -32,39 +32,14 @@ import {
   AlertCircle,
 } from 'lucide-vue-next'
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-interface Amenity { id: number; name: string; icon: string }
-interface Tenant  { id: number; name: string; email: string }
-interface Lease   { id: number; start_date: string; end_date: string; rent_price: number; tenant: Tenant }
 
-interface Unit {
-  id: number
-  unit_number: string
-  type: string
-  floor_number: number
-  size_sqm: number
-  rent_price: number
-  deposit_amount: number
-  status: 'vacant' | 'occupied' | 'maintenance' | 'reserved'
-  active_lease: Lease | null
-  amenities: Amenity[]
-}
 
-interface Property {
-  id: number
-  name: string
-  address: string
-  city: string
-  type: string
-  description: string | null
-  total_units: number
-  occupied_units: number
-  photo: string | null
-  amenities: Amenity[]
-  units: Unit[]
-}
-
-const props = defineProps<{ property: Property }>()
+const props = defineProps({
+  property:{
+    type: Object,
+    required: true,
+  }
+})
 
 // ── State ─────────────────────────────────────────────────────────────────────
 const filterStatus = ref('all')
@@ -93,14 +68,14 @@ const vacantCount      = computed(() => props.property.units.filter(u => u.statu
 const maintenanceCount = computed(() => props.property.units.filter(u => u.status === 'maintenance').length)
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const statusConfig: Record<string, { label: string; icon: any; pill: string }> = {
+const statusConfig = {
   vacant:      { label: 'Vacant',      icon: Circle,       pill: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-100' },
   occupied:    { label: 'Occupied',    icon: CheckCircle2, pill: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:border-blue-900' },
   maintenance: { label: 'Maintenance', icon: Wrench,       pill: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:border-amber-900' },
   reserved:    { label: 'Reserved',    icon: Clock,        pill: 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:border-violet-900' },
 }
 
-const deleteUnit = (id: number) => {
+const deleteUnit = (id) => {
   if (confirm('Delete this unit?')) router.delete(route('units.destroy', id))
 }
 
@@ -109,7 +84,7 @@ const deleteProperty = () => {
     router.delete(route('properties.destroy', props.property.id))
 }
 
-const formatCurrency = (n: number) =>
+const formatCurrency = (n) =>
   '₱' + n.toLocaleString('en-PH', { minimumFractionDigits: 0 })
 </script>
 

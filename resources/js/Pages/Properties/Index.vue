@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup >
 import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
@@ -43,54 +43,32 @@ import {
 } from 'lucide-vue-next'
 
 // ── Props from Inertia ────────────────────────────────────────────────────────
-interface Unit {
-  id: number
-  status: 'vacant' | 'occupied' | 'maintenance' | 'reserved'
-}
-
-interface Property {
-  id: number
-  name: string
-  address: string
-  city: string
-  type: 'residential' | 'commercial'
-  status: string
-  total_units: number
-  occupied_units: number
-  vacant_units: number
-  photo: string | null
-  units: Unit[]
-}
 
 
 
-const props = defineProps<{
+const props = defineProps({
   properties: {
-    data: Property[]
-    current_page: number
-    last_page: number
-    per_page: number
-    total: number
-    from: number
-    to: number
-    path: string
-    query?: Record<string, any>
-  }
-  filters: { search?: string; type?: string; status?: string }
-}>()
+   type: Object,
+   required: true,
+  },
+  filters: {
+    type: Object,
+    default: () => ({}),
+}
+})
 
 
 // ── Local state ───────────────────────────────────────────────────────────────
 const search = ref(props.filters.search ?? '')
 const type = ref(props.filters.type ?? 'all')
 const status = ref(props.filters.status ?? 'all')
-const viewMode = ref<'grid' | 'list'>('grid')
+const viewMode = ref('grid')
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const occupancyPct = (p: Property) =>
+const occupancyPct = (p) =>
   p.total_units ? Math.round((p.occupied_units / p.total_units) * 100) : 0
 
-const vacantCount = (p: Property) =>
+const vacantCount = (p ) =>
   p.units?.filter(u => u.status === 'vacant').length ?? (p.total_units - p.occupied_units)
 
 const applyFilters = () => {
@@ -109,17 +87,17 @@ watch(search, () => {
   debouncedSearch()
 })
 
-const deleteProperty = (id: number) => {
+const deleteProperty = (id) => {
   if (confirm('Delete this property? This cannot be undone.'))
     router.delete(route('properties.destroy', id))
 }
 
-const typeLabel: Record<string, string> = {
+const typeLabel= {
   residential: 'Residential',
   commercial: 'Commercial',
 }
 
-const statusColor: Record<string, string> = {
+const statusColor = {
   vacant: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-900',
   occupied: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:border-blue-900',
   maintenance: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:border-amber-900',

@@ -43,6 +43,7 @@ class StaffController extends Controller
     {
         $query = User::query()
             ->where('role', 'staff')
+            ->orWhere('role', 'admin')
             ->with('userData');
 
 

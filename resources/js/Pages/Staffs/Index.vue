@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { ref, computed, watch } from "vue";
 import { router } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
@@ -8,44 +8,16 @@ import PageHeader from "@/components/PageHeader.vue";
 import { Eye, FilePenLine, Trash2 } from "lucide-vue-next";
 import StaffModal from "./Form.vue";
 
-interface Staff {
-    id: number;
-    name: string;
-    first_name: string;
-    middle_name: string | null;
-    last_name: string;
-    initials: string;
-    email: string;
-    phone: string | null;
-    department: string | null;
-    job_title: string | null;
-    role: string | null;
-    status: string| null;
-    employment_status: string | null;
-    last_login: string | null;
-    gender: string | null;
-    birthday: string | null;
-    date_of_birth: string | null;
-    address: string | null;
-    city: string | null;
-    province: string | null;
-    photo: string | null;
-}
-
-type PaginatedStaff = {
-    data: Staff[];
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-    prev_page_url: string | null;
-    next_page_url: string | null;
-};
-
-const props = defineProps<{
-    staff: PaginatedStaff;
-    filters: { search?: string };
-}>();
+const props = defineProps({
+    staff: {
+        type: Object, // PaginatedStaff: { data: Staff[], current_page, last_page, per_page, total, prev_page_url, next_page_url }
+        required: true,
+    },
+    filters: {
+        type: Object, // { search?: string }
+        default: () => ({}),
+    },
+});
 
 // ── Search ────────────────────────────────────────────────────────
 const search = ref(props.filters.search ?? "");
@@ -65,9 +37,9 @@ const staffList = computed(() =>
     props.staff.data.map((s) => ({
         ...s,
         role: s.role ?? s.job_title ?? null,
-        employment_status : s.employment_status ?? "Active",
+        employment_status: s.employment_status ?? "Active",
         status: s.status ?? "Active",
-        
+
     }))
 );
 
@@ -76,7 +48,7 @@ const activeCount = computed(() => staffList.value.filter((s) => s.employment_st
 const inactiveCount = computed(() => staffList.value.filter((s) => s.employment_status === "Inactive").length);
 const onlineCount = computed(() => staffList.value.filter((s) => s.status === "Active").length);
 // ── Avatar ────────────────────────────────────────────────────────
-function getAvatarColor(name?: string | null) {
+function getAvatarColor(name) {
     const colors = [
         "bg-violet-500", "bg-blue-500", "bg-emerald-500", "bg-amber-500",
         "bg-rose-500", "bg-cyan-500", "bg-indigo-500", "bg-fuchsia-500",
@@ -87,8 +59,8 @@ function getAvatarColor(name?: string | null) {
 
 // ── Modal state ───────────────────────────────────────────────────
 const modalOpen = ref(false);
-const modalMode = ref<"add" | "edit" | "view">("add");
-const selectedStaff = ref<Staff | null>(null);
+const modalMode = ref("add"); // "add" | "edit" | "view"
+const selectedStaff = ref(null);
 
 function openAdd() {
     selectedStaff.value = null;
@@ -96,13 +68,13 @@ function openAdd() {
     modalOpen.value = true;
 }
 
-function openEdit(staff: Staff) {
+function openEdit(staff) {
     selectedStaff.value = staff;
     modalMode.value = "edit";
     modalOpen.value = true;
 }
 
-function openView(staff: Staff) {
+function openView(staff) {
     selectedStaff.value = staff;
     modalMode.value = "view";
     modalOpen.value = true;
@@ -110,9 +82,9 @@ function openView(staff: Staff) {
 
 // ── Delete ────────────────────────────────────────────────────────
 const deleteDialogOpen = ref(false);
-const staffToDelete = ref<number | null>(null);
+const staffToDelete = ref(null);
 
-function openDeleteDialog(id: number) {
+function openDeleteDialog(id) {
     staffToDelete.value = id;
     deleteDialogOpen.value = true;
 }
@@ -130,7 +102,7 @@ function confirmDelete() {
 }
 
 // ── Pagination ────────────────────────────────────────────────────
-function goToPage(url: string | null) {
+function goToPage(url) {
     if (url) router.visit(url, { preserveScroll: true });
 }
 </script>
@@ -167,8 +139,7 @@ function goToPage(url: string | null) {
                     <div class="relative bg-white rounded-2xl p-5 border border-emerald-100 shadow-sm overflow-hidden">
                         <div class="absolute inset-0 bg-linear-to-br from-emerald-50/60 to-transparent" />
                         <div class="relative flex items-center gap-4">
-                            <div
-                                class="w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                            <div class="w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
                                 <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -184,8 +155,7 @@ function goToPage(url: string | null) {
                     <div class="relative bg-white rounded-2xl p-5 border border-emerald-100 shadow-sm overflow-hidden">
                         <div class="absolute inset-0 bg-linear-to-br from-emerald-50/60 to-transparent" />
                         <div class="relative flex items-center gap-4">
-                            <div
-                                class="w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                            <div class="w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
                                 <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -295,7 +265,7 @@ function goToPage(url: string | null) {
                                         <div>
                                             <p class="font-semibold text-slate-800 text-[13px]">{{ staff.name }}</p>
                                             <p class="text-[11px] text-slate-400">#{{ String(staff.id).padStart(4, "0")
-                                            }}</p>
+                                                }}</p>
                                         </div>
                                     </div>
                                 </td>
@@ -347,8 +317,8 @@ function goToPage(url: string | null) {
                                 </td>
                                 <!-- Last Active -->
                                 <td class="px-6 py-3.5">
-                                    <span v-if="staff.last_login"
-                                        class="text-[12px] text-slate-700">{{ new Date(staff.last_login).toLocaleDateString() }}</span>
+                                    <span v-if="staff.last_login" class="text-[12px] text-slate-700">{{ new
+                                        Date(staff.last_login).toLocaleDateString() }}</span>
                                     <span v-else class="text-slate-400 text-[12px]">—</span>
                                 </td>
 
